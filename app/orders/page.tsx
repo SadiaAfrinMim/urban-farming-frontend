@@ -2,22 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-interface OrderItem {
-  id: string;
-  produceId: string;
-  quantity: number;
-  price: number;
-}
-
-interface Order {
-  id: string;
-  userId: string;
-  items: OrderItem[];
-  total: number;
-  status: string;
-  createdAt: string;
-}
+import api, { Order } from '../lib/api';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -31,16 +16,12 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/orders', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        }
-      });
-      if (!res.ok) throw new Error('অর্ডার লিস্ট পেতে সমস্যা হয়েছে');
-      const response = await res.json();
-      setOrders(response.data);
+      setError(null);
+      const ordersData = await api.getOrders();
+      setOrders(ordersData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'অর্ডার লিস্ট পেতে সমস্যা হয়েছে');
+      setOrders([]);
     } finally {
       setLoading(false);
     }

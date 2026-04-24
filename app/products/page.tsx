@@ -2,18 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  image?: string;
-  category?: string;
-}
+import api, { Produce } from '../lib/api';
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Produce[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,12 +16,12 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/produces');
-      if (!res.ok) throw new Error('API থেকে ডেটা পেতে সমস্যা হয়েছে');
-      const response = await res.json();
-      setProducts(response.data.data);
+      setError(null);
+      const productsData = await api.getProduces();
+      setProducts(productsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'API থেকে ডেটা পেতে সমস্যা হয়েছে');
+      setProducts([]);
     } finally {
       setLoading(false);
     }

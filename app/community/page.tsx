@@ -31,24 +31,19 @@ export default function CommunityPage() {
   const createPost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPost.trim()) return;
-    
+
     try {
       setPosting(true);
-      const res = await fetch('/api/community/posts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-        },
-        body: JSON.stringify({ postContent: newPost })
+      setError(null);
+      await api.createCommunityPost({
+        title: '',
+        content: newPost
       });
-      
-      if (!res.ok) throw new Error('পোস্ট করা যাচ্ছে না');
-      
+
       setNewPost('');
       fetchPosts();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'পোস্ট করা যাচ্ছে না');
     } finally {
       setPosting(false);
     }

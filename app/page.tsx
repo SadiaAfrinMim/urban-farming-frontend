@@ -23,12 +23,24 @@ export default function Home() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/produces');
+      const res = await fetch('http://localhost:5000/api/v1/produces');
       if (!res.ok) throw new Error('API থেকে ডেটা পেতে সমস্যা হয়েছে');
       const response = await res.json();
-      setProducts(response.data.data);
+
+      // Handle different response structures
+      let productsData = [];
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          productsData = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          productsData = response.data.data;
+        }
+      }
+
+      setProducts(productsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
+      setProducts([]); // Ensure products is always an array
     } finally {
       setLoading(false);
     }

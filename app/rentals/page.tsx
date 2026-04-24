@@ -33,12 +33,15 @@ export default function RentalsPage() {
     }
     try {
       setLoading(true);
-      const res = await fetch(`/api/spaces/search?q=${encodeURIComponent(searchQuery)}`);
-      if (!res.ok) throw new Error('সার্চ করা যাচ্ছে না');
-      const response = await res.json();
-      setSpaces(response.data);
+      // For now, filter locally. In production, implement server-side search
+      const allSpaces = await api.getRentalSpaces();
+      const filteredSpaces = allSpaces.filter(space =>
+        space.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        space.location.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setSpaces(filteredSpaces);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : 'সার্চ করা যাচ্ছে না');
     } finally {
       setLoading(false);
     }

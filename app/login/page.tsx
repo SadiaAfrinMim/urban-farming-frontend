@@ -12,6 +12,11 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  const fillAdminCredentials = () => {
+    setEmail('admin@example.com');
+    setPassword('password123');
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -19,7 +24,9 @@ export default function LoginPage() {
       setError(null);
       
       const data = await api.login(email, password);
-      localStorage.setItem('token', data.data.accessToken);
+      localStorage.setItem('token', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      localStorage.setItem('user', JSON.stringify(data.user));
       router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'লগইন ব্যর্থ');
@@ -68,6 +75,16 @@ export default function LoginPage() {
           {error && (
             <div className="text-red-500 text-sm text-center">{error}</div>
           )}
+
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={fillAdminCredentials}
+              className="text-sm text-blue-600 hover:text-blue-500 underline"
+            >
+              Admin Login (Auto-fill)
+            </button>
+          </div>
 
           <div>
             <button

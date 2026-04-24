@@ -72,17 +72,47 @@ export default function Navbar() {
 
           {userRole === 'vendor' && (
             <>
-              <Link 
-                href="/vendor/dashboard" 
+              <Link
+                href="/vendor/dashboard"
                 className={`text-gray-600 hover:text-blue-600 px-3 py-2 rounded ${pathname === '/vendor/dashboard' ? 'text-blue-600 font-medium' : ''}`}
               >
-                ভেন্ডর ড্যাশবোর্ড
+                ড্যাশবোর্ড
               </Link>
-              <Link 
-                href="/vendor/products" 
+              <Link
+                href="/vendor/profile"
+                className={`text-gray-600 hover:text-blue-600 px-3 py-2 rounded ${pathname === '/vendor/profile' ? 'text-blue-600 font-medium' : ''}`}
+              >
+                প্রোফাইল
+              </Link>
+              <Link
+                href="/vendor/products"
                 className={`text-gray-600 hover:text-blue-600 px-3 py-2 rounded ${pathname === '/vendor/products' ? 'text-blue-600 font-medium' : ''}`}
               >
-                আমার প্রোডাক্ট
+                প্রোডাক্ট
+              </Link>
+              <Link
+                href="/vendor/rentals"
+                className={`text-gray-600 hover:text-blue-600 px-3 py-2 rounded ${pathname === '/vendor/rentals' ? 'text-blue-600 font-medium' : ''}`}
+              >
+                রেন্টাল
+              </Link>
+              <Link
+                href="/vendor/plant-tracking"
+                className={`text-gray-600 hover:text-blue-600 px-3 py-2 rounded ${pathname === '/vendor/plant-tracking' ? 'text-blue-600 font-medium' : ''}`}
+              >
+                প্ল্যান্ট ট্র্যাকিং
+              </Link>
+              <Link
+                href="/vendor/orders"
+                className={`text-gray-600 hover:text-blue-600 px-3 py-2 rounded ${pathname === '/vendor/orders' ? 'text-blue-600 font-medium' : ''}`}
+              >
+                অর্ডার
+              </Link>
+              <Link
+                href="/vendor/community"
+                className={`text-gray-600 hover:text-blue-600 px-3 py-2 rounded ${pathname === '/vendor/community' ? 'text-blue-600 font-medium' : ''}`}
+              >
+                কমিউনিটি
               </Link>
             </>
           )}
