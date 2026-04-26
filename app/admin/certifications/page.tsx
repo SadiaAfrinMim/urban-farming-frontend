@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { CheckCircle, XCircle, FileCheck, AlertCircle, Calendar } from 'lucide-react';
 import { usePendingCertifications, useApproveCertification, useRejectCertification } from '../../hooks/useApi';
+import ProfileImage from '../../components/ProfileImage';
 import toast from 'react-hot-toast';
 
 interface VendorProfile {
@@ -46,133 +47,206 @@ export default function AdminCertificationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-xl text-gray-600">লোড হচ্ছে...</div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <div className="text-xl text-gray-700 font-medium">লোড হচ্ছে...</div>
+          <div className="text-gray-500 mt-2">সার্টিফিকেশন ডেটা আনা হচ্ছে</div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <AlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">ত্রুটি</h2>
-          <p className="text-gray-600">{error instanceof Error ? error.message : 'সার্টিফিকেশন লোড করতে সমস্যা হয়েছে'}</p>
-          <button
-            onClick={() => refetch()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            রিফ্রেশ করুন
-          </button>
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-orange-500 rounded-full w-20 h-20 mx-auto opacity-10"></div>
+              <AlertCircle className="w-20 h-20 mx-auto text-red-500 relative z-10" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-3">⚠️ ত্রুটি ঘটেছে</h2>
+            <p className="text-gray-600 text-lg mb-6">{error instanceof Error ? error.message : 'সার্টিফিকেশন লোড করতে সমস্যা হয়েছে'}</p>
+            <button
+              onClick={() => refetch()}
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+            >
+              🔄 রিফ্রেশ করুন
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <Link href="/admin/dashboard" className="text-blue-600 hover:underline">← এডমিন ড্যাশবোর্ডে ফিরে যান</Link>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+      <div className="max-w-7xl mx-auto py-12 px-4">
+        {/* Header Section */}
+        <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl p-8 mb-8 text-white shadow-2xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <Link href="/admin/dashboard" className="inline-flex items-center gap-2 text-green-100 hover:text-white transition-colors mb-4">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                এডমিন ড্যাশবোর্ডে ফিরে যান
+              </Link>
+              <h1 className="text-4xl font-bold mb-2">🌱 ভেন্ডর সার্টিফিকেশন রিভিউ</h1>
+              <p className="text-green-100 text-lg">নতুন ভেন্ডরদের সার্টিফিকেশন যাচাই করে অনুমোদন করুন</p>
+            </div>
+            <div className="hidden md:block">
+              <FileCheck className="w-24 h-24 text-green-200 opacity-80" />
+            </div>
+          </div>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">ভেন্ডর সার্টিফিকেশন রিভিউ</h1>
-
         {certifications.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl shadow-md">
-            <FileCheck className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">কোনো পেন্ডিং সার্টিফিকেশন নেই</h3>
-            <p className="text-gray-500">সব ভেন্ডর সার্টিফিকেশন রিভিউ করা হয়েছে।</p>
+          <div className="text-center py-20 bg-white rounded-2xl shadow-xl border border-gray-100">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-500 rounded-full w-20 h-20 mx-auto opacity-10"></div>
+              <FileCheck className="w-20 h-20 mx-auto text-green-500 mb-6 relative z-10" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-3">🎉 কোনো পেন্ডিং সার্টিফিকেশন নেই</h3>
+            <p className="text-gray-600 text-lg max-w-md mx-auto">সব ভেন্ডর সার্টিফিকেশন রিভিউ করা হয়েছে। নতুন আবেদনের জন্য অপেক্ষা করুন!</p>
+            <div className="mt-6 flex justify-center">
+              <div className="bg-gradient-to-r from-green-100 to-blue-100 px-6 py-3 rounded-full">
+                <span className="text-green-700 font-medium">সব পরিষ্কার! ✨</span>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {certifications.map((vendor) => (
-              <div key={vendor.id} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-                <div className="flex gap-4">
-                  {/* Vendor Profile Photo */}
-                  <div className="flex-shrink-0">
-                    {vendor.profilePhoto ? (
-                      <img
-                        src={vendor.profilePhoto}
-                        alt={vendor.farmName}
-                        className="w-16 h-16 object-cover rounded-full border border-gray-200"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">{vendor.farmName.charAt(0)}</span>
+              <div key={vendor.id} className="bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 overflow-hidden">
+                {/* Card Header with Gradient */}
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">🌾</span>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">{vendor.farmName}</h3>
+                      <p className="text-blue-100 text-sm">📍 {vendor.farmLocation}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <div className="flex gap-4 mb-4">
+                    {/* Vendor Profile Photo */}
+                    <div className="flex-shrink-0">
+                      <div className="relative">
+                        <ProfileImage
+                          user={{
+                            name: vendor.farmName,
+                            role: 'Vendor',
+                            profileData: { profilePhoto: vendor.profilePhoto }
+                          }}
+                          size="lg"
+                          className="border-4 border-white shadow-lg"
+                        />
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                          <span className="text-xs">⭐</span>
+                        </div>
                       </div>
-                    )}
+                    </div>
+
+                    {/* Vendor Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-gray-500">👤</span>
+                            <span className="font-medium text-gray-700">ভেন্ডর:</span>
+                          </div>
+                          <span className="text-gray-800">{vendor.user.name}</span>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-gray-500">📧</span>
+                            <span className="font-medium text-gray-700">ইমেইল:</span>
+                          </div>
+                          <span className="text-gray-800 text-xs break-all">{vendor.user.email}</span>
+                        </div>
+                        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3 border border-green-200">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-green-600">📋</span>
+                            <span className="font-medium text-green-700">সার্টিফিকেশন:</span>
+                          </div>
+                          <span className="text-green-800 font-semibold">{vendor.certifications.length}টি ডকুমেন্ট</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Vendor Details */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-1">{vendor.farmName}</h3>
-                    <p className="text-gray-600 text-sm mb-2">{vendor.farmLocation}</p>
-                    <div className="space-y-1 text-sm text-gray-600">
-                      <div className="flex justify-between">
-                        <span className="font-medium">ভেন্ডর:</span>
-                        <span className="truncate ml-2">{vendor.user.name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">ইমেইল:</span>
-                        <span className="truncate ml-2 text-xs">{vendor.user.email}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">সার্টিফিকেট:</span>
-                        <span className="text-sm">{vendor.certifications.length}টি</span>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-3 mt-4">
-                      <button
-                        onClick={() => handleApprove(vendor.id)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm transition-colors"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        অনুমোদন
-                      </button>
-                      <button
-                        onClick={() => handleReject(vendor.id)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm transition-colors"
-                      >
-                        <XCircle className="w-4 h-4" />
-                        প্রত্যাখ্যান
-                      </button>
-                    </div>
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      onClick={() => handleApprove(vendor.id)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 text-sm font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      ✅ অনুমোদন
+                    </button>
+                    <button
+                      onClick={() => handleReject(vendor.id)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 text-sm font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+                    >
+                      <XCircle className="w-5 h-5" />
+                      ❌ প্রত্যাখ্যান
+                    </button>
                   </div>
                 </div>
 
                 {/* Certification Preview */}
                 {vendor.certifications.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">সার্টিফিকেশন:</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {vendor.certifications.slice(0, 4).map((cert, index) => {
-                        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(cert);
-                        return (
-                          <div key={index} className="relative">
-                            {isImage ? (
-                              <img
-                                src={cert}
-                                alt={`সার্টিফিকেশন ${index + 1}`}
-                                className="w-full h-16 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => window.open(cert, '_blank')}
-                              />
-                            ) : (
-                              <div className="w-full h-16 bg-gray-100 rounded flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors">
-                                <FileCheck className="w-6 h-6 text-gray-500" />
-                              </div>
-                            )}
+                  <div className="px-6 pb-6">
+                    <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <FileCheck className="w-5 h-5 text-blue-600" />
+                        <h4 className="text-lg font-semibold text-gray-800">📄 সার্টিফিকেশন ডকুমেন্টস</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {vendor.certifications.slice(0, 4).map((cert, index) => {
+                          const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(cert);
+                          return (
+                            <div key={index} className="relative group">
+                              {isImage ? (
+                                <div className="relative overflow-hidden rounded-lg shadow-md">
+                                  <img
+                                    src={cert}
+                                    alt={`সার্টিফিকেশন ${index + 1}`}
+                                    className="w-full h-20 object-cover cursor-pointer hover:scale-105 transition-transform duration-200"
+                                    onClick={() => window.open(cert, '_blank')}
+                                  />
+                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
+                                    <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-xs font-medium">
+                                      দেখুন
+                                    </span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="w-full h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center cursor-pointer hover:from-blue-200 hover:to-purple-200 transition-all duration-200 shadow-md">
+                                  <div className="text-center">
+                                    <FileCheck className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+                                    <span className="text-xs text-blue-700 font-medium">ডকুমেন্ট</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {vendor.certifications.length > 4 && (
+                          <div className="w-full h-20 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg flex items-center justify-center shadow-md">
+                            <div className="text-center">
+                              <span className="text-2xl">📚</span>
+                              <span className="text-xs text-purple-700 font-medium block mt-1">+{vendor.certifications.length - 4} আরও</span>
+                            </div>
                           </div>
-                        );
-                      })}
-                      {vendor.certifications.length > 4 && (
-                        <div className="w-full h-16 bg-gray-100 rounded flex items-center justify-center">
-                          <span className="text-xs text-gray-500">+{vendor.certifications.length - 4} আরও</span>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

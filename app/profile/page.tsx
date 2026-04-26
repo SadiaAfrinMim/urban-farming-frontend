@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, Button, Input, Alert, LoadingSpinner, StatusBadge } from '../components/ui';
+import ProfileImage from '../components/ProfileImage';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 
@@ -187,34 +188,18 @@ export default function ProfilePage() {
 
         <Card className="mb-6">
           {/* Profile Header */}
-          <div className="flex items-center mb-6">
-            <div className="flex-shrink-0 mr-6">
-              {editing && imagePreview && (profile.role === 'Customer' || profile.role === 'Admin') ? (
-                <img
-                  src={imagePreview}
-                  alt="Profile Preview"
-                  className="w-24 h-24 rounded-full object-cover shadow-lg"
-                />
-              ) : (profile.role === 'Customer' || profile.role === 'Admin') && profile.profileImage ? (
-                <img
-                  src={profile.profileImage}
-                  alt="Profile"
-                  className="w-24 h-24 rounded-full object-cover shadow-lg"
-                />
-              ) : profile.role === 'Vendor' && profile.profileData?.profilePhoto ? (
-                <img
-                  src={profile.profileData.profilePhoto}
-                  alt="Profile"
-                  className="w-24 h-24 rounded-full object-cover shadow-lg"
-                />
-              ) : (
-                <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-3xl font-bold text-white">
-                    {profile.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </span>
-                </div>
-              )}
-            </div>
+           <div className="flex items-center mb-6">
+             <div className="flex-shrink-0 mr-6">
+               {editing && imagePreview && (profile.role === 'Customer' || profile.role === 'Admin') ? (
+                 <img
+                   src={imagePreview}
+                   alt="Profile Preview"
+                   className="w-24 h-24 rounded-full object-cover shadow-lg"
+                 />
+               ) : (
+                 <ProfileImage user={profile} size="lg" className="shadow-lg" />
+               )}
+             </div>
             <div className="flex-1">
               <h2 className="text-2xl font-semibold text-gray-900">{profile.name}</h2>
               <p className="text-gray-600 mt-1">{profile.email}</p>
@@ -239,25 +224,15 @@ export default function ProfilePage() {
               {(profile.role === 'Customer' || profile.role === 'Admin') && (
                 <div className="flex items-center gap-6">
                   <div className="flex-shrink-0">
-                    {imagePreview ? (
-                      <img
-                        src={imagePreview}
-                        alt="Profile Preview"
-                        className="w-20 h-20 rounded-full object-cover shadow-md"
-                      />
-                    ) : profile.profileImage ? (
-                      <img
-                        src={profile.profileImage}
-                        alt="Profile"
-                        className="w-20 h-20 rounded-full object-cover shadow-md"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-md">
-                        <span className="text-xl font-bold text-white">
-                          {profile.name?.charAt(0)?.toUpperCase() || 'U'}
-                        </span>
-                      </div>
-                    )}
+                     {imagePreview ? (
+                       <img
+                         src={imagePreview}
+                         alt="Profile Preview"
+                         className="w-20 h-20 rounded-full object-cover shadow-md"
+                       />
+                     ) : (
+                       <ProfileImage user={profile} size="md" className="shadow-md" />
+                     )}
                   </div>
                   <div className="flex-1">
                     <label className="block text-sm font-semibold text-gray-800 mb-2">
@@ -280,21 +255,9 @@ export default function ProfilePage() {
               {profile.role === 'Vendor' && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0">
-                      {profile.profileData?.profilePhoto ? (
-                        <img
-                          src={profile.profileData.profilePhoto}
-                          alt="Profile"
-                          className="w-16 h-16 rounded-full object-cover shadow-md"
-                        />
-                      ) : (
-                        <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-md">
-                          <span className="text-lg font-bold text-white">
-                            {profile.name?.charAt(0)?.toUpperCase() || 'U'}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                     <div className="flex-shrink-0">
+                       <ProfileImage user={profile} size="md" className="shadow-md" />
+                     </div>
                     <div className="flex-1">
                       <h4 className="text-sm font-semibold text-blue-800 mb-1">ভেন্ডর প্রোফাইল ছবি</h4>
                       <p className="text-sm text-blue-700">

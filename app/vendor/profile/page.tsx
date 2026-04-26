@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { StatusBadge } from '../../components/StatusBadge';
 import { useVendorProfile, useUpdateVendorProfile } from '../../hooks/useApi';
 import { Card, Button, Input, Alert, LoadingSpinner } from '../../components/ui';
+import ProfileImage from '../../components/ProfileImage';
 import toast from 'react-hot-toast';
 
 export default function VendorProfile() {
@@ -157,19 +158,15 @@ export default function VendorProfile() {
           {/* Profile Photo Display */}
           <div className="flex items-center mb-6">
             <div className="flex-shrink-0 mr-6">
-              {profile?.profilePhoto ? (
-                <img
-                  src={profile.profilePhoto}
-                  alt="প্রোফাইল ফটো"
-                  className="w-24 h-24 object-cover rounded-full border-4 border-green-100 shadow-lg"
-                />
-              ) : (
-                <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
-                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-              )}
+              <ProfileImage
+                user={{
+                  name: profile?.farmName,
+                  role: 'Vendor',
+                  profileData: { profilePhoto: profile?.profilePhoto }
+                }}
+                size="lg"
+                className="border-4 border-green-100 shadow-lg"
+              />
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-semibold text-gray-900">ফার্ম তথ্য</h2>

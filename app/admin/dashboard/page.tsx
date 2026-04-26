@@ -41,60 +41,25 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
 
-      // Fetch users - include credentials for authentication
+      // Fetch dashboard stats
+      const statsRes = await fetch('http://localhost:5000/api/v1/admin/dashboard/stats', {
+        credentials: 'include'
+      });
+
+      // Fetch users for the table
       const usersRes = await fetch('http://localhost:5000/api/v1/admin/users?limit=100', {
         credentials: 'include'
       });
-      const certsRes = await fetch('http://localhost:5000/api/v1/admin/certifications/pending', {
-        credentials: 'include'
-      });
-      const productsRes = await fetch('http://localhost:5000/api/v1/admin/produces/pending', {
-        credentials: 'include'
-      });
-      const postsRes = await fetch('http://localhost:5000/api/v1/admin/posts', {
-        credentials: 'include'
-      });
+
+      if (statsRes.ok) {
+        const statsData = await statsRes.json();
+        setStats(statsData.data);
+      }
 
       if (usersRes.ok) {
         const usersResponse = await usersRes.json();
         const userList = usersResponse.data || [];
         setUsers(userList);
-
-        // Calculate stats
-        const totalUsers = userList.length;
-        const totalVendors = userList.filter((u: User) => u.role === 'Vendor').length;
-        const totalCustomers = userList.filter((u: User) => u.role === 'Customer').length;
-
-        // Get pending certifications
-        let pendingCerts = 0;
-        if (certsRes.ok) {
-          const certsData = await certsRes.json();
-          pendingCerts = certsData.data?.length || 0;
-        }
-
-        // Get pending products
-        let pendingProducts = 0;
-        if (productsRes.ok) {
-          const productsData = await productsRes.json();
-          pendingProducts = productsData.data?.length || 0;
-        }
-
-        // Get unapproved posts
-        let pendingPosts = 0;
-        if (postsRes.ok) {
-          const postsData = await postsRes.json();
-          const posts = postsData.data || [];
-          pendingPosts = posts.filter((post: any) => !post.isApproved).length;
-        }
-
-        setStats({
-          totalUsers,
-          totalVendors,
-          totalCustomers,
-          pendingCertifications: pendingCerts,
-          pendingProducts,
-          pendingPosts,
-        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'ডেটা লোড করা যাচ্ছে না');

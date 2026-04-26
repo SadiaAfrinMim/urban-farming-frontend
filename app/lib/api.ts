@@ -53,6 +53,49 @@ export interface CommunityPost {
   postDate?: string;
   createdAt: string;
   updatedAt?: string;
+  likeCount?: number;
+  commentCount?: number;
+  likes?: Array<{
+    id: number;
+    userId: number;
+  }>;
+  comments?: PostComment[];
+}
+
+export interface PostComment {
+  id: number;
+  userId: number;
+  postId: number;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: number;
+    name: string;
+  };
+}
+
+export interface CustomerPost {
+  id: number;
+  userId: number;
+  title: string;
+  content: string;
+  category: 'Question' | 'Discussion' | 'Review' | 'Suggestion';
+  isApproved: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  likeCount?: number;
+  commentCount?: number;
+  likes?: Array<{
+    id: number;
+    userId: number;
+  }>;
+  comments?: PostComment[];
 }
 
 export interface SustainabilityTip {
@@ -536,18 +579,18 @@ const api = {
 
   // Admin APIs
   // User Management
-  getAllUsers: async (filters?: any) => {
+  getAllUsersAdmin: async (filters?: any) => {
     const queryString = filters ? new URLSearchParams(filters).toString() : '';
     const url = queryString ? `/admin/users?${queryString}` : '/admin/users';
     const data = await apiClient.get<ApiResponse<User[]>>(url);
     return data.data;
   },
 
-  updateUserStatus: async (userId: string, status: string) => {
+  updateUserStatusAdmin: async (userId: string, status: string) => {
     return apiClient.patch(`/admin/users/${userId}/status`, { status });
   },
 
-  updateUserRole: async (userId: string, role: string) => {
+  updateUserRoleAdmin: async (userId: string, role: string) => {
     return apiClient.patch(`/admin/users/${userId}/role`, { role });
   },
 
@@ -719,6 +762,87 @@ const api = {
   getVendorOrders: async (): Promise<Order[]> => {
     const data = await apiClient.get<ApiResponse<Order[]>>('/vendor/orders');
     return Array.isArray(data.data) ? data.data : [];
+  },
+
+  // Customer APIs
+  getCustomerPosts: async (): Promise<CustomerPost[]> => {
+    const data = await apiClient.get<ApiResponse<CustomerPost[]>>('/customer/posts');
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  createCustomerPost: async (postData: {
+    title: string;
+    content: string;
+    category: 'Question' | 'Discussion' | 'Review' | 'Suggestion';
+  }): Promise<CustomerPost> => {
+    const data = await apiClient.post<ApiResponse<CustomerPost>>('/customer/posts', postData);
+    return data.data;
+  },
+
+  updateCustomerPost: async (id: string, postData: Partial<{
+    title: string;
+    content: string;
+    category: 'Question' | 'Discussion' | 'Review' | 'Suggestion';
+  }>): Promise<CustomerPost> => {
+    const data = await apiClient.patch<ApiResponse<CustomerPost>>(`/customer/posts/${id}`, postData);
+    return data.data;
+  },
+
+  deleteCustomerPost: async (id: string): Promise<void> => {
+    await apiClient.delete(`/customer/posts/${id}`);
+  },
+
+  toggleCustomerPostLike: async (postId: string): Promise<{ liked: boolean }> => {
+    const data = await apiClient.post<ApiResponse<{ liked: boolean }>>(`/customer/posts/${postId}/like`, {});
+    return data.data;
+  },
+
+  addCustomerPostComment: async (postId: string, content: string): Promise<PostComment> => {
+    const data = await apiClient.post<ApiResponse<PostComment>>(`/customer/posts/${postId}/comments`, { content });
+    return data.data;
+  },
+
+  getCustomerPostComments: async (postId: string): Promise<PostComment[]> => {
+    const data = await apiClient.get<ApiResponse<PostComment[]>>(`/customer/posts/${postId}/comments`);
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  deleteCustomerPostComment: async (commentId: string): Promise<void> => {
+    await apiClient.delete(`/customer/posts/comments/${commentId}`);
+  },
+
+  getCustomerDashboard: async (): Promise<{
+    user: any;
+    stats: { postsCount: number; ordersCount: number };
+    recentPosts: CustomerPost[];
+  }> => {
+    const data = await apiClient.get<ApiResponse<any>>('/customer/dashboard');
+    return data.data;
+  },
+
+  getCustomerOrders: async (): Promise<Order[]> => {
+    const data = await apiClient.get<ApiResponse<Order[]>>('/customer/orders');
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  // Community Likes and Comments APIs
+  toggleLike: async (postId: string): Promise<{ liked: boolean }> => {
+    const data = await apiClient.post<ApiResponse<{ liked: boolean }>>(`/community/posts/${postId}/like`, {});
+    return data.data;
+  },
+
+  addComment: async (postId: string, content: string): Promise<PostComment> => {
+    const data = await apiClient.post<ApiResponse<PostComment>>(`/community/posts/${postId}/comments`, { content });
+    return data.data;
+  },
+
+  getPostComments: async (postId: string): Promise<PostComment[]> => {
+    const data = await apiClient.get<ApiResponse<PostComment[]>>(`/community/posts/${postId}/comments`);
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  deleteComment: async (commentId: string): Promise<void> => {
+    await apiClient.delete(`/community/posts/comments/${commentId}`);
   },
 };
 

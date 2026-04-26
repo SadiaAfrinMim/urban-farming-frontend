@@ -1,191 +1,428 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import api from '../../lib/api';
+import { Card, Button, Input, Textarea, Select, Alert, LoadingSpinner } from '../../components/ui';
+import ProfileImage from '../../components/ProfileImage';
+import api, { CommunityPost } from '../../lib/api';
+import { useCommunityPosts, useCreateCommunityPost } from '../../hooks/useApi';
+import { useToggleLike, useAddComment, useDeleteComment } from '../../hooks/useApi';
+import toast from 'react-hot-toast';
 
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
+interface VendorCommunityPost extends CommunityPost {
+  authorRole?: 'Vendor' | 'Customer' | 'Admin';
 }
 
-interface Notification {
-  id: string;
-  message: string;
-  type: 'order' | 'rental' | 'info';
-  read: boolean;
-  createdAt: string;
-}
+export default function VendorCommunityPage() {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [postContent, setPostContent] = useState('');
+  const [postType, setPostType] = useState<'tip' | 'question' | 'experience' | 'announcement'>('tip');
+  const [showComments, setShowComments] = useState<{ [key: number]: boolean }>({});
+  const [commentContent, setCommentContent] = useState<{ [key: number]: string }>({});
 
-export default function CommunityAndNotifications() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showNewPostForm, setShowNewPostForm] = useState(false);
-  const [newPost, setNewPost] = useState({
-    title: '',
-    content: '',
-  });
+  const { data: posts, isLoading, error, refetch } = useCommunityPosts();
+  const createPostMutation = useCreateCommunityPost();
+  const toggleLikeMutation = useToggleLike();
+  const addCommentMutation = useAddComment();
+  const deleteCommentMutation = useDeleteComment();
 
-  useEffect(() => {
-    fetchPosts();
-    fetchNotifications();
-  }, []);
-
-  const fetchPosts = async () => {
-    try {
-      const data = await api.get('/vendor/posts');
-      // Mock data
-    
-    } catch (err) {
-      console.error('Failed to fetch posts');
-    }
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      // Mock notifications
-      setNotifications([
-        {
-          id: '1',
-          message: 'New order received from Alice Johnson',
-          type: 'order',
-          read: false,
-          createdAt: '2024-01-15T10:00:00Z',
-        },
-        {
-          id: '2',
-          message: 'Plot A1 has been rented by John Doe',
-          type: 'rental',
-          read: true,
-          createdAt: '2024-01-14T16:30:00Z',
-        },
-        {
-          id: '3',
-          message: 'Monthly earnings report is ready',
-          type: 'info',
-          read: false,
-          createdAt: '2024-01-13T08:00:00Z',
-        },
-      ]);
-    } catch (err) {
-      console.error('Failed to fetch notifications');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleNewPost = async (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle new post creation
-    console.log('Creating new post:', newPost);
-    setShowNewPostForm(false);
-    setNewPost({ title: '', content: '' });
+    if (!postContent.trim()) {
+      toast.error('Please enter some content for your post');
+      return;
+    }
+
+    try {
+      const content = `[${postType.toUpperCase()}] ${postContent}`;
+      await createPostMutation.mutateAsync({
+        postContent: content
+      });
+
+      setPostContent('');
+      setShowCreateForm(false);
+      refetch();
+    } catch (err) {
+      console.error('Failed to create post:', err);
+    }
   };
 
-  const markNotificationRead = (id: string) => {
-    setNotifications(notifications.map(notif =>
-      notif.id === id ? { ...notif, read: true } : notif
-    ));
+  const getPostTypeInfo = (content: string) => {
+    if (content.startsWith('[TIP]')) {
+      return { type: 'tip', label: '💡 Farming Tip', color: 'bg-green-100 text-green-800' };
+    }
+    if (content.startsWith('[QUESTION]')) {
+      return { type: 'question', label: '❓ Question', color: 'bg-blue-100 text-blue-800' };
+    }
+    if (content.startsWith('[EXPERIENCE]')) {
+      return { type: 'experience', label: '🌱 Experience', color: 'bg-purple-100 text-purple-800' };
+    }
+    if (content.startsWith('[ANNOUNCEMENT]')) {
+      return { type: 'announcement', label: '📢 Announcement', color: 'bg-yellow-100 text-yellow-800' };
+    }
+    return { type: 'general', label: '💬 General', color: 'bg-gray-100 text-gray-800' };
   };
 
-  if (loading) {
-    return <div className="p-8">Loading...</div>;
+  const getCleanContent = (content: string) => {
+    return content.replace(/^\[(TIP|QUESTION|EXPERIENCE|ANNOUNCEMENT)\]\s*/, '');
+  };
+
+  const handleToggleLike = async (postId: number) => {
+    try {
+      await toggleLikeMutation.mutateAsync(postId.toString());
+    } catch (error) {
+      console.error('Failed to toggle like:', error);
+    }
+  };
+
+  const handleAddComment = async (postId: number) => {
+    const content = commentContent[postId]?.trim();
+    if (!content) {
+      toast.error('কমেন্ট লিখুন');
+      return;
+    }
+
+    try {
+      await addCommentMutation.mutateAsync({
+        postId: postId.toString(),
+        content,
+      });
+      setCommentContent(prev => ({ ...prev, [postId]: '' }));
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!confirm('এই কমেন্ট মুছে ফেলবেন?')) {
+      return;
+    }
+
+    try {
+      await deleteCommentMutation.mutateAsync(commentId.toString());
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+    }
+  };
+
+  const toggleComments = (postId: number) => {
+    setShowComments(prev => ({
+      ...prev,
+      [postId]: !prev[postId]
+    }));
+  };
+
+
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">Community & Notifications</h1>
+    <div className="max-w-7xl mx-auto p-6">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">🌱 Vendor Community</h1>
+          <p className="text-gray-600 mt-2">Connect with other vendors, share experiences, and grow together</p>
+        </div>
+        <Button
+          onClick={() => setShowCreateForm(true)}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+        >
+          + Share Knowledge
+        </Button>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Notifications */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Notifications</h2>
-          <div className="space-y-3">
-            {notifications.map((notif) => (
-              <div
-                key={notif.id}
-                className={`p-3 rounded border-l-4 ${
-                  notif.read ? 'bg-gray-50 border-gray-300' : 'bg-blue-50 border-blue-500'
-                }`}
+      {error && (
+        <Alert type="error" className="mb-6">
+          Failed to load community posts. Please try again.
+        </Alert>
+      )}
+
+      {showCreateForm && (
+        <Card className="mb-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Share Your Knowledge</h2>
+            <Button
+              onClick={() => setShowCreateForm(false)}
+              variant="outline"
+              size="sm"
+            >
+              ✕
+            </Button>
+          </div>
+
+          <form onSubmit={handleCreatePost} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Post Type *
+              </label>
+              <Select
+                value={postType}
+                onChange={(e) => setPostType(e.target.value as any)}
+                options={[
+                  { value: 'tip', label: '💡 Farming Tip - Share helpful advice' },
+                  { value: 'question', label: '❓ Question - Ask for help from the community' },
+                  { value: 'experience', label: '🌱 Experience - Share your farming journey' },
+                  { value: 'announcement', label: '📢 Announcement - Important updates or news' },
+                ]}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Content *
+              </label>
+              <Textarea
+                value={postContent}
+                onChange={(e) => setPostContent(e.target.value)}
+                required
+                placeholder={
+                  postType === 'tip' ? 'Share a helpful farming tip...' :
+                  postType === 'question' ? 'Ask your question here...' :
+                  postType === 'experience' ? 'Tell us about your farming experience...' :
+                  'Share your announcement...'
+                }
+                rows={6}
+                maxLength={1000}
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                {postContent.length}/1000 characters
+              </p>
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                type="submit"
+                disabled={createPostMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <p className={notif.read ? 'text-gray-700' : 'text-gray-900 font-medium'}>
-                      {notif.message}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(notif.createdAt).toLocaleString()}
+                {createPostMutation.isPending ? <LoadingSpinner size="sm" /> : '📤 Share Post'}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                variant="outline"
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      {/* Community Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card className="text-center">
+          <div className="p-6">
+            <div className="text-2xl mb-2">👥</div>
+            <div className="text-2xl font-bold text-blue-600">{posts?.length || 0}</div>
+            <div className="text-gray-600">Total Posts</div>
+          </div>
+        </Card>
+
+        <Card className="text-center">
+          <div className="p-6">
+            <div className="text-2xl mb-2">💡</div>
+            <div className="text-2xl font-bold text-green-600">
+              {posts?.filter(p => p.postContent?.startsWith('[TIP]')).length || 0}
+            </div>
+            <div className="text-gray-600">Tips Shared</div>
+          </div>
+        </Card>
+
+        <Card className="text-center">
+          <div className="p-6">
+            <div className="text-2xl mb-2">❓</div>
+            <div className="text-2xl font-bold text-yellow-600">
+              {posts?.filter(p => p.postContent?.startsWith('[QUESTION]')).length || 0}
+            </div>
+            <div className="text-gray-600">Questions Asked</div>
+          </div>
+        </Card>
+
+        <Card className="text-center">
+          <div className="p-6">
+            <div className="text-2xl mb-2">🌱</div>
+            <div className="text-2xl font-bold text-purple-600">
+              {posts?.filter(p => p.postContent?.startsWith('[EXPERIENCE]')).length || 0}
+            </div>
+            <div className="text-gray-600">Experiences Shared</div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Posts List */}
+      <div className="space-y-6">
+        {posts && posts.length === 0 ? (
+          <Card className="text-center py-12">
+            <div className="text-6xl mb-4">🌱</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No posts yet</h3>
+            <p className="text-gray-600 mb-6">Be the first to share your farming wisdom!</p>
+            <Button onClick={() => setShowCreateForm(true)} className="bg-green-600 hover:bg-green-700">
+              Create First Post
+            </Button>
+          </Card>
+        ) : (
+          posts?.map((post) => {
+            const postInfo = getPostTypeInfo(post.postContent || '');
+            const cleanContent = getCleanContent(post.postContent || '');
+
+            return (
+              <Card key={post.id} className="hover:shadow-lg transition-shadow">
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                     <div className="flex items-center gap-3">
+                       <ProfileImage user={post.user || {}} size="md" />
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{post.user?.name || 'Anonymous'}</h4>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <span>{new Date(post.postDate || post.createdAt).toLocaleDateString()}</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${postInfo.color}`}>
+                            {postInfo.label}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {cleanContent}
                     </p>
                   </div>
-                  {!notif.read && (
-                    <button
-                      onClick={() => markNotificationRead(notif.id)}
-                      className="ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
-                    >
-                      Mark Read
-                    </button>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <span className="flex items-center gap-1">
+                        👍 {post.likeCount || 0} Likes
+                      </span>
+                      <span className="flex items-center gap-1">
+                        💬 {post.commentCount || 0} Comments
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleLike(post.id)}
+                        disabled={toggleLikeMutation.isPending}
+                        className="hover:bg-red-50 hover:border-red-200"
+                      >
+                        👍 Like
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleComments(post.id)}
+                        className="hover:bg-blue-50 hover:border-blue-200"
+                      >
+                        💬 Comment
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Comments Section */}
+                  {showComments[post.id] && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      {/* Existing Comments */}
+                      {post.comments && post.comments.length > 0 && (
+                        <div className="space-y-3 mb-4">
+                          <h5 className="text-sm font-medium text-gray-700">Comments:</h5>
+                          {post.comments.map((comment) => (
+                            <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
+                              <div className="flex justify-between items-start">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {comment.user?.name || 'Anonymous'}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {new Date(comment.createdAt).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                  disabled={deleteCommentMutation.isPending}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
+                                >
+                                  🗑️
+                                </Button>
+                              </div>
+                              <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add Comment Form */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={commentContent[post.id] || ''}
+                          onChange={(e) => setCommentContent(prev => ({ ...prev, [post.id]: e.target.value }))}
+                          placeholder="Write a comment..."
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddComment(post.id);
+                            }
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddComment(post.id)}
+                          disabled={addCommentMutation.isPending || !commentContent[post.id]?.trim()}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-4"
+                        >
+                          {addCommentMutation.isPending ? <LoadingSpinner size="sm" /> : 'Post'}
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Community Posts */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">My Community Posts</h2>
-            <button
-              onClick={() => setShowNewPostForm(!showNewPostForm)}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-            >
-              {showNewPostForm ? 'Cancel' : 'New Post'}
-            </button>
-          </div>
-
-          {showNewPostForm && (
-            <form onSubmit={handleNewPost} className="mb-6 p-4 border rounded">
-              <div className="mb-3">
-                <input
-                  type="text"
-                  placeholder="Post title..."
-                  value={newPost.title}
-                  onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <textarea
-                  placeholder="Share your thoughts..."
-                  value={newPost.content}
-                  onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                  className="w-full p-2 border rounded"
-                  rows={4}
-                  required
-                />
-              </div>
-              <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                Post
-              </button>
-            </form>
-          )}
-
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <div key={post.id} className="border-b pb-4">
-                <h3 className="font-medium text-lg">{post.title}</h3>
-                <p className="text-gray-600 mt-2">{post.content}</p>
-                <p className="text-xs text-gray-500 mt-2">
-                  Posted on {new Date(post.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+              </Card>
+            );
+          })
+        )}
       </div>
+
+      {/* Quick Actions */}
+      <Card className="mt-8">
+        <div className="p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button
+              onClick={() => setShowCreateForm(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              📝 Share Tip
+            </Button>
+
+            <Button
+              onClick={() => setPostType('question')}
+              variant="outline"
+              className="border-blue-300 text-blue-700 hover:bg-blue-50"
+            >
+              ❓ Ask Question
+            </Button>
+
+            <Button
+              onClick={() => setPostType('experience')}
+              variant="outline"
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+            >
+              🌱 Share Experience
+            </Button>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

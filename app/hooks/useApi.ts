@@ -536,13 +536,187 @@ export const useCreateAnnouncement = () => {
 export const useDeleteAnnouncement = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (announcementId: string) => api.deleteAnnouncement(announcementId),
+    mutationFn: (id: string) => api.deleteAnnouncement(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-announcements'] });
       toast.success('Announcement deleted successfully!');
     },
     onError: (error: ApiError) => {
       toast.error(error.message || 'Failed to delete announcement');
+    },
+  });
+};
+
+// Customer API Hooks
+export const useCustomerPosts = () => {
+  return useQuery({
+    queryKey: ['customer-posts'],
+    queryFn: () => api.getCustomerPosts(),
+  });
+};
+
+export const useCreateCustomerPost = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Parameters<typeof api.createCustomerPost>[0]) => api.createCustomerPost(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-dashboard'] });
+      toast.success('Post created successfully!');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to create post');
+    },
+  });
+};
+
+export const useUpdateCustomerPost = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof api.updateCustomerPost>[1] }) =>
+      api.updateCustomerPost(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-dashboard'] });
+      toast.success('Post updated successfully!');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to update post');
+    },
+  });
+};
+
+export const useDeleteCustomerPost = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteCustomerPost(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-dashboard'] });
+      toast.success('Post deleted successfully!');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to delete post');
+    },
+  });
+};
+
+export const useCustomerDashboard = () => {
+  return useQuery({
+    queryKey: ['customer-dashboard'],
+    queryFn: () => api.getCustomerDashboard(),
+  });
+};
+
+export const useCustomerOrders = () => {
+  return useQuery({
+    queryKey: ['customer-orders'],
+    queryFn: () => api.getCustomerOrders(),
+  });
+};
+
+export const useToggleCustomerPostLike = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (postId: string) => api.toggleCustomerPostLike(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-posts'] });
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to toggle like');
+    },
+  });
+};
+
+export const useAddCustomerPostComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, content }: { postId: string; content: string }) =>
+      api.addCustomerPostComment(postId, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-posts'] });
+      toast.success('Comment added successfully!');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to add comment');
+    },
+  });
+};
+
+export const useDeleteCustomerPostComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) => api.deleteCustomerPostComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customer-posts'] });
+      toast.success('Comment deleted successfully!');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to delete comment');
+    },
+  });
+};
+
+// Community API Hooks
+export const useCommunityPosts = () => {
+  return useQuery({
+    queryKey: ['community-posts'],
+    queryFn: () => api.getCommunityPosts(),
+  });
+};
+
+export const useCreateCommunityPost = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Parameters<typeof api.createCommunityPost>[0]) => api.createCommunityPost(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+      toast.success('Post created successfully!');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to create post');
+    },
+  });
+};
+
+export const useToggleLike = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (postId: string) => api.toggleLike(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to toggle like');
+    },
+  });
+};
+
+export const useAddComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, content }: { postId: string; content: string }) =>
+      api.addComment(postId, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+      toast.success('Comment added successfully!');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to add comment');
+    },
+  });
+};
+
+export const useDeleteComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) => api.deleteComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+      toast.success('Comment deleted successfully!');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to delete comment');
     },
   });
 };

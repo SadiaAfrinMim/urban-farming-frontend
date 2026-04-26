@@ -6,33 +6,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useVendorProfile } from '../hooks/useApi';
 
-// ProfilePhoto component for consistent display
-const ProfilePhoto = ({ src, alt, size = 32, fallback }: {
-  src?: string | null;
-  alt: string;
-  size?: number;
-  fallback: string;
-}) => {
-  if (src) {
-    return (
-      <img
-        src={src}
-        alt={alt}
-        className={`w-${size/4} h-${size/4} rounded-full object-cover border-2 border-white shadow-sm`}
-        style={{ width: size, height: size }}
-      />
-    );
-  }
-
-  return (
-    <div
-      className={`w-${size/4} h-${size/4} bg-gradient-to-br from-green-400 to-blue-400 rounded-full flex items-center justify-center text-white font-bold shadow-sm`}
-      style={{ width: size, height: size }}
-    >
-      {fallback}
-    </div>
-  );
-};
+import ProfileImage from './ProfileImage';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -221,11 +195,15 @@ export default function Navbar() {
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="flex items-center gap-3 bg-gradient-to-r from-gray-100 to-gray-200 px-5 py-2 rounded-xl hover:from-gray-200 hover:to-gray-300 transition-all duration-200 shadow-sm"
               >
-                <ProfilePhoto
-                  src={profilePhoto}
-                  alt="প্রোফাইল ফটো"
-                  size={32}
-                  fallback={user?.role === 'Admin' ? 'A' : user?.role === 'Vendor' ? 'V' : 'C'}
+                <ProfileImage
+                  user={{
+                    name: user?.name,
+                    role: user?.role,
+                    profileImage: user?.profileImage,
+                    profileData: vendorProfile ? { profilePhoto: vendorProfile.profilePhoto } : undefined
+                  }}
+                  size="sm"
+                  className="border-2 border-white shadow-sm"
                 />
                 <span className="font-medium text-gray-800">
                   {user?.role === 'Admin' ? 'এডমিন' : user?.role === 'Vendor' ? 'ভেন্ডর' : 'কাস্টমার'}
