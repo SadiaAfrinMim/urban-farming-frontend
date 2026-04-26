@@ -300,11 +300,11 @@ export default function AdminDashboard() {
                          user.status === 'Pending' ? 'পেন্ডিং' : 'নিষ্ক্রিয়'}
                       </span>
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-6 py-4">
                       <select
                         value={user.status}
                         onChange={(e) => updateUserStatus(user.id, e.target.value)}
-                        className="px-2 py-1 border rounded text-sm"
+                        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="Active">সক্রিয়</option>
                         <option value="Pending">পেন্ডিং</option>

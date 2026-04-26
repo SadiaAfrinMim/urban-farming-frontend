@@ -26,12 +26,10 @@ export default function CreateRentalSpacePage() {
     try {
       setLoading(true);
 
-      const data =       await api.createRentalSpace({
-        name: formData.location,
-        description: formData.description,
-        price: parseFloat(formData.price),
+      const data = await api.createRentalSpace({
         location: formData.location,
         size: formData.size,
+        price: parseFloat(formData.price),
         image: formData.image || undefined,
       });
 

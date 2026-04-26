@@ -96,9 +96,7 @@ export default function VendorSpacesPage() {
                 </span>
               </div>
               
-              {space.description && (
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">{space.description}</p>
-              )}
+              <p className="text-gray-600 text-sm mb-3">{space.size} • ৳{space.price}/দিন</p>
               
               <div className="flex flex-wrap gap-2 mb-4">
                 {space.amenities?.map((amenity, index) => (

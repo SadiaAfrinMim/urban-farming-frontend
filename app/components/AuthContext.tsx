@@ -77,7 +77,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       // Store tokens and user
-      // Tokens are stored in httpOnly cookies by the backend
+      // Store access token in localStorage for API calls (backend also sets httpOnly cookie)
+      localStorage.setItem('accessToken', data.data.accessToken);
       localStorage.setItem('user', JSON.stringify(data.data.user));
 
       setUser(data.data.user);

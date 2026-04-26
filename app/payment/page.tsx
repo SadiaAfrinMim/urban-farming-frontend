@@ -1,103 +1,167 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import axios from 'axios';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+
+// Dynamic import of CheckoutForm
+import dynamic from 'next/dynamic';
+
+const CheckoutForm = dynamic(() => import('../components/CheckoutForm'), {
+  loading: () => <div>Loading checkout form...</div>,
+  ssr: false,
+});
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function PaymentPage() {
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const sessionId = searchParams.get('session_id');
+  const router = useRouter();
+  const [clientSecret, setClientSecret] = useState('');
+  const [orderId, setOrderId] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
+    const sessionId = searchParams.get('session_id');
     const canceled = searchParams.get('canceled');
-    if (sessionId) {
-      setTimeout(() => setStatus('success'), 1500);
-    } else if (canceled) {
-      setTimeout(() => setStatus('error'), 1000);
-    } else {
-      setTimeout(() => setStatus('error'), 1500);
-    }
-  }, [sessionId, searchParams]);
 
-  if (status === 'loading') {
+    if (canceled) {
+      router.push('/marketplace?payment=canceled');
+      return;
+    }
+
+    if (sessionId) {
+      // Handle successful payment
+      router.push('/marketplace?payment=success');
+      return;
+    }
+
+    // Create payment intent for the order
+    createPaymentIntent();
+  }, [searchParams]);
+
+  const createPaymentIntent = async () => {
+    try {
+      // Get order ID from localStorage or URL params
+      const storedOrderId = localStorage.getItem('pendingOrderId');
+      console.log('Stored order ID:', storedOrderId);
+
+      if (!storedOrderId) {
+        setError('No order found for payment');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Creating payment intent for order:', storedOrderId);
+
+      // Get access token from localStorage
+      const accessToken = localStorage.getItem('accessToken');
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
+      const response = await fetch('/api/v1/payments/create-intent', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ orderId: storedOrderId }),
+        credentials: 'include', // Important: include cookies
+      });
+
+      console.log('Payment intent response status:', response.status);
+      const data = await response.json();
+      console.log('Payment intent response data:', data);
+
+      if (data.success) {
+        setClientSecret(data.data.clientSecret);
+        setOrderId(storedOrderId);
+      } else {
+        setError(data.message || 'Failed to create payment intent');
+      }
+    } catch (err) {
+      console.error('Payment intent creation error:', err);
+      setError('Failed to initialize payment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const appearance = {
+    theme: 'stripe' as const,
+  };
+
+  const options = {
+    clientSecret,
+    appearance,
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="bg-white p-10 rounded-2xl shadow-xl text-center max-w-md border border-gray-100">
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-green-100 rounded-full blur-xl opacity-50"></div>
-            <Loader2 className="w-20 h-20 mx-auto text-green-600 animate-spin relative z-10" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">পেমেন্ট প্রসেস হচ্ছে</h1>
-          <p className="text-gray-500 mb-2">অনুগ্রহ করে অপেক্ষা করুন...</p>
-          <div className="w-full bg-gray-100 rounded-full h-2 mt-6 overflow-hidden">
-            <div className="bg-green-500 h-2 rounded-full animate-pulse" style={{width: '70%'}}></div>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">পেমেন্ট ইনিশিয়ালাইজ হচ্ছে...</p>
         </div>
       </div>
     );
   }
 
-  if (status === 'success') {
+  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
-        <div className="bg-white p-10 rounded-2xl shadow-2xl text-center max-w-md border border-green-100 transform transition-all">
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-green-200 rounded-full blur-xl opacity-40"></div>
-            <div className="relative z-10 bg-green-100 w-28 h-28 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle className="w-16 h-16 text-green-600" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-3">✅ পেমেন্ট সফল হয়েছে!</h1>
-          <p className="text-gray-600 mb-2 text-lg">আপনার অর্ডার সফলভাবে কনফার্ম করা হয়েছে</p>
-          <p className="text-gray-500 mb-8">ডেলিভারি খুব শীঘ্রই পাঠানো হবে।</p>
-          
-          <div className="space-y-3">
-            <button
-              onClick={() => window.location.href = '/orders'}
-              className="w-full px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 font-semibold transition-all shadow-lg shadow-green-200 hover:shadow-xl"
-            >
-              📦 আমার অর্ডার দেখুন
-            </button>
-            <button
-              onClick={() => window.location.href = '/products'}
-              className="w-full px-6 py-4 bg-white text-gray-700 rounded-xl hover:bg-gray-50 font-medium border border-gray-200 transition-all"
-            >
-              🛒 আরো প্রোডাক্ট কিনুন
-            </button>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="text-red-500 text-4xl mb-4">❌</div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">পেমেন্ট ত্রুটি</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => router.push('/marketplace')}
+            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+          >
+            মার্কেটপ্লেসে ফিরে যান
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50">
-      <div className="bg-white p-10 rounded-2xl shadow-2xl text-center max-w-md border border-red-100">
-        <div className="relative mb-6">
-          <div className="absolute inset-0 bg-red-200 rounded-full blur-xl opacity-40"></div>
-          <div className="relative z-10 bg-red-100 w-28 h-28 rounded-full flex items-center justify-center mx-auto">
-            <XCircle className="w-16 h-16 text-red-600" />
-          </div>
-        </div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-3">❌ পেমেন্ট ব্যর্থ হয়েছে</h1>
-        <p className="text-gray-600 mb-2 text-lg">দয়া করে আবার চেষ্টা করুন</p>
-        <p className="text-gray-500 mb-8">আপনার অ্যাকাউন্ট থেকে কোনো টাকা কাটা হয়নি।</p>
-        
-        <div className="space-y-3">
-          <button
-            onClick={() => window.location.href = '/orders'}
-            className="w-full px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold transition-all shadow-lg shadow-blue-200 hover:shadow-xl"
-          >
-            🔄 আবার চেষ্টা করুন
-          </button>
-          <button
-            onClick={() => window.location.href = '/products'}
-            className="w-full px-6 py-4 bg-white text-gray-700 rounded-xl hover:bg-gray-50 font-medium border border-gray-200 transition-all"
-          >
-            🛍️ প্রোডাক্ট পেজে ফিরে যান
-          </button>
+    <div className="min-h-screen bg-gray-50 py-16 px-4">
+      <div className="max-w-md mx-auto">
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">
+            পেমেন্ট সম্পন্ন করুন
+          </h1>
+
+          {clientSecret && CheckoutForm && (
+            <Elements options={options} stripe={stripePromise}>
+              <CheckoutForm orderId={orderId} />
+            </Elements>
+          )}
+
+          {clientSecret && !CheckoutForm && (
+            <div className="text-center py-8">
+              <div className="text-red-600 mb-4">❌ CheckoutForm component failed to load</div>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+              >
+                Reload Page
+              </button>
+            </div>
+          )}
+
+          {!clientSecret && !loading && !error && (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">পেমেন্ট লোড হচ্ছে...</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

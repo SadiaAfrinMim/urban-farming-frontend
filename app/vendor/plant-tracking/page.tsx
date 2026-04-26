@@ -107,7 +107,7 @@ export default function PlantTracking() {
           <option value="">Choose a plot...</option>
           {spaces.map((space) => (
             <option key={space.id} value={space.id}>
-              {space.name} - {space.rentedBy}
+              {space.location} ({space.size})
             </option>
           ))}
         </select>
@@ -180,7 +180,7 @@ export default function PlantTracking() {
           {spaces.map((space) => (
             <div key={space.id} className="flex justify-between items-center p-4 border rounded">
               <div>
-                <h3 className="font-medium">{space.name}</h3>
+                <h3 className="font-medium">{space.location}</h3>
                 <p className="text-sm text-gray-600">Rented by: {space.rentedBy}</p>
               </div>
               <div className="text-right">

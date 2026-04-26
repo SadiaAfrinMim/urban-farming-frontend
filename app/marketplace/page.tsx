@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import api, { Produce } from '../lib/api';
+import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function MarketplacePage() {
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const [products, setProducts] = useState<Produce[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,9 +20,12 @@ export default function MarketplacePage() {
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching products...');
       const productsData = await api.getProduces();
+      console.log('Products fetched:', productsData?.length || 0, 'items');
       setProducts(productsData);
     } catch (err) {
+      console.error('Error fetching products:', err);
       setError(err instanceof Error ? err.message : 'পণ্য লোড করতে সমস্যা হয়েছে');
       setProducts([]);
     } finally {
@@ -51,6 +59,59 @@ export default function MarketplacePage() {
   const clearSearch = () => {
     setSearchQuery('');
     fetchProducts();
+  };
+
+  const handleBuyProduct = async (productId: number) => {
+    // Check authentication first
+    if (!isAuthenticated || !user) {
+      toast.error('প্রোডাক্ট কেনার জন্য লগইন করুন');
+      router.push('/login');
+      return;
+    }
+
+    try {
+      // Create order first
+      const product = products.find(p => p.id === productId);
+      if (!product) {
+        toast.error('প্রোডাক্ট খুঁজে পাওয়া যায়নি');
+        return;
+      }
+
+      // Check if product is approved
+      if (product.certificationStatus !== 'Approved') {
+        toast.error('এই প্রোডাক্টটি এখন কেনার জন্য উপলব্ধ নয়');
+        return;
+      }
+
+      const orderData = {
+        produceId: productId, // Send as number
+        quantity: 1, // Default to 1 for now
+        totalPrice: product.price,
+      };
+
+      console.log('Creating order with data:', orderData);
+
+      const orderResponse = await api.createOrder(orderData);
+      console.log('Order creation response:', orderResponse);
+
+      if (orderResponse.success) {
+        const orderId = orderResponse.data.id;
+
+        // Store order ID for payment page
+        localStorage.setItem('pendingOrderId', orderId.toString());
+        console.log('Stored order ID:', orderId);
+
+        toast.success('অর্ডার তৈরি হয়েছে! পেমেন্ট পেজে যাচ্ছে...');
+
+        // Redirect to payment page
+        router.push('/payment');
+      } else {
+        toast.error(orderResponse.message || 'অর্ডার তৈরি করা যায়নি');
+      }
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      toast.error('প্রোডাক্ট কেনার সময় ত্রুটি ঘটেছে');
+    }
   };
 
   if (loading) {
@@ -164,18 +225,22 @@ export default function MarketplacePage() {
               {products.map((product) => (
                 <div key={product.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
                   <div className="relative h-56 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center overflow-hidden">
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="text-4xl">🥕</span>
-                        <span className="text-gray-500 font-medium">ছবি নেই</span>
-                      </div>
-                    )}
+                  {product.image ? (
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const fallback = e.currentTarget.parentElement?.querySelector('.fallback') as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className="fallback flex flex-col items-center gap-2" style={{ display: product.image ? 'none' : 'flex' }}>
+                    <span className="text-4xl">🥕</span>
+                    <span className="text-gray-500 font-medium">ছবি নেই</span>
+                  </div>
                     <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-green-700">
                       {product.category || 'পণ্য'}
                     </div>
@@ -208,8 +273,12 @@ export default function MarketplacePage() {
                         </span>
                       </div>
                     </div>
-                    <button className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white text-sm font-medium rounded-xl hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
-                      🛒 কিনুন
+                      <button
+                      onClick={() => handleBuyProduct(product.id)}
+                      disabled={product.certificationStatus !== 'Approved'}
+                      className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white text-sm font-medium rounded-xl hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {isAuthenticated ? '🛒 কিনুন' : '🔐 লগইন করে কিনুন'}
                     </button>
                   </div>
                 </div>

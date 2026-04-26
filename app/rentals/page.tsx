@@ -36,7 +36,7 @@ export default function RentalsPage() {
       // For now, filter locally. In production, implement server-side search
       const allSpaces = await api.getRentalSpaces();
       const filteredSpaces = allSpaces.filter(space =>
-        space.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        space.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
         space.location.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setSpaces(filteredSpaces);
@@ -116,7 +116,7 @@ export default function RentalsPage() {
                 </div>
               </div>
               <div className="p-6">
-                <h3 className="font-bold text-xl text-gray-800 mb-2">{space.name}</h3>
+                <h3 className="font-bold text-xl text-gray-800 mb-2">{space.location}</h3>
                 <p className="text-gray-600 text-sm mb-3 flex items-center gap-1">
                   📍 {space.location}
                 </p>

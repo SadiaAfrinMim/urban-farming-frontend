@@ -61,11 +61,9 @@ export default function RentalSpaceManagement() {
   const handleAddSpace = async (data: any) => {
     try {
       await api.createRentalSpace({
-        name: data.name,
-        description: data.description,
-        price: data.price,
         location: data.location,
         size: data.size,
+        price: data.price,
       });
       setShowAddForm(false);
       // Refresh spaces list
@@ -102,7 +100,7 @@ export default function RentalSpaceManagement() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {spaces.map((space) => (
           <div key={space.id} className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-2">{space.name}</h3>
+            <h3 className="text-lg font-semibold mb-2">{space.location} ({space.size})</h3>
             <div className="space-y-2 text-sm">
               <p><span className="font-medium">Location:</span> {space.location}</p>
               <p><span className="font-medium">Size:</span> {space.size}</p>

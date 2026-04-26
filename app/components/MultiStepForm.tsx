@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 
 interface RentalSpaceData {
-  name: string;
-  description: string;
   price: number;
   location: string;
   size: string;
@@ -15,8 +13,6 @@ interface MultiStepFormProps {
 export const MultiStepForm: React.FC<MultiStepFormProps> = ({ onSubmit }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<RentalSpaceData>({
-    name: '',
-    description: '',
     price: 0,
     location: '',
     size: '',
@@ -35,9 +31,8 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({ onSubmit }) => {
   };
 
   const steps = [
-    { id: 1, title: 'Basic Info' },
-    { id: 2, title: 'Location & Size' },
-    { id: 3, title: 'Pricing' },
+    { id: 1, title: 'Location & Size' },
+    { id: 2, title: 'Pricing' },
   ];
 
   return (
@@ -63,32 +58,6 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({ onSubmit }) => {
       <form onSubmit={handleSubmit}>
         {currentStep === 1 && (
           <div>
-            <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Name</label>
-              <input
-                type="text"
-                name="name"
-                value={data.name}
-                onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                name="description"
-                value={data.description}
-                onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-        )}
-
-        {currentStep === 2 && (
-          <div>
             <h2 className="text-xl font-semibold mb-4">Location & Size</h2>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">Location</label>
@@ -102,7 +71,7 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({ onSubmit }) => {
               />
             </div>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Size (sq ft)</label>
+              <label className="block text-sm font-medium text-gray-700">Size</label>
               <input
                 type="text"
                 name="size"
@@ -115,16 +84,16 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({ onSubmit }) => {
           </div>
         )}
 
-        {currentStep === 3 && (
+        {currentStep === 2 && (
           <div>
             <h2 className="text-xl font-semibold mb-4">Pricing</h2>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Price per month</label>
+              <label className="block text-sm font-medium text-gray-700">Price per day</label>
               <input
                 type="number"
                 name="price"
                 value={data.price}
-                onChange={handleChange}
+                onChange={(e) => setData({ ...data, price: parseFloat(e.target.value) || 0 })}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 required
               />
@@ -142,7 +111,7 @@ export const MultiStepForm: React.FC<MultiStepFormProps> = ({ onSubmit }) => {
               Previous
             </button>
           )}
-          {currentStep < 3 ? (
+          {currentStep < 2 ? (
             <button
               type="button"
               onClick={nextStep}

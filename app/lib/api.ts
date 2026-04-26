@@ -26,18 +26,14 @@ export interface Produce {
 }
 
 export interface RentalSpace {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
+  id: number;
+  vendorId: number;
   location: string;
   size: string;
+  price: number;
+  availability: boolean;
   image?: string;
-  available: boolean;
-  rentedBy?: string;
-  rentalStart?: string;
-  rentalEnd?: string;
-  plantStatus?: string;
+  plantStatus?: PlantHealth;
   lastWatered?: string;
   createdAt: string;
   updatedAt: string;
@@ -367,7 +363,7 @@ const api = {
     return Array.isArray(data.data) ? data.data : [];
   },
 
-  createOrder: async (orderData: { items: any[]; totalAmount: number }) => {
+  createOrder: async (orderData: { produceId: number; quantity: number; totalPrice: number }) => {
     return apiClient.post('/orders', orderData);
   },
 
@@ -382,6 +378,19 @@ const api = {
 
   deleteOrder: async (id: string) => {
     return apiClient.delete(`/orders/${id}`);
+  },
+
+  // Payments
+  createPaymentIntent: async (orderId: string) => {
+    return apiClient.post('/payments/create-intent', { orderId });
+  },
+
+  confirmPayment: async (paymentIntentId: string) => {
+    return apiClient.post('/payments/confirm', { paymentIntentId });
+  },
+
+  createCheckoutSession: async (orderId: string) => {
+    return apiClient.post('/payments/checkout-session', { orderId });
   },
 
   // Auth
@@ -627,7 +636,7 @@ const api = {
     return Array.isArray(data.data) ? data.data : [];
   },
 
-  createRentalSpace: async (spaceData: Omit<RentalSpace, 'id' | 'createdAt' | 'updatedAt' | 'available' | 'image'> & { image?: File }) => {
+  createRentalSpace: async (spaceData: Omit<RentalSpace, 'id' | 'vendorId' | 'createdAt' | 'availability' | 'image'> & { image?: File }) => {
     const formData = new FormData();
 
     // Add text fields
