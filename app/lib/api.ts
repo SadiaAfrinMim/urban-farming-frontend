@@ -255,6 +255,7 @@ const apiClient = {
   },
 
   async upload<T>(endpoint: string, formData: FormData): Promise<T> {
+    console.log(`API: Upload called for ${endpoint}`);
     const headers: HeadersInit = {};
     // Cookies are sent automatically with all requests
 
@@ -264,6 +265,9 @@ const apiClient = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
+    console.log(`API: Making upload request to ${API_BASE_URL}${endpoint}`);
+    console.log(`API: Headers:`, headers);
+
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
@@ -271,14 +275,21 @@ const apiClient = {
         body: formData,
       });
 
+      console.log(`API: Response status: ${response.status} ${response.statusText}`);
+      console.log(`API: Response headers:`, Object.fromEntries(response.headers.entries()));
+
       let data: any;
       try {
-        data = await response.json();
-      } catch {
+        const text = await response.text();
+        console.log(`API: Response text:`, text);
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.log(`API: Failed to parse JSON response:`, parseError);
         data = { message: 'Upload failed' };
       }
 
       if (!response.ok) {
+        console.log(`API: Request failed with status ${response.status}`);
         throw new ApiError(
           data.message || `Upload failed: ${response.status}`,
           response.status,
@@ -288,6 +299,7 @@ const apiClient = {
 
       return data;
     } catch (error) {
+      console.log(`API: Upload error:`, error);
       if (error instanceof ApiError) {
         throw error;
       }
@@ -668,26 +680,28 @@ const api = {
     return Array.isArray(data.data) ? data.data : [];
   },
 
-  createRentalSpace: async (spaceData: Omit<RentalSpace, 'id' | 'vendorId' | 'createdAt' | 'availability' | 'image'> & { image?: File }) => {
-    const formData = new FormData();
+  createRentalSpace: async (spaceData: any) => {
+    console.log('API: createRentalSpace called with:', spaceData instanceof FormData ? 'FormData' : 'JSON');
 
-    // Add text fields
-    Object.entries(spaceData).forEach(([key, value]) => {
-      if (key !== 'image' && value !== undefined) {
-        formData.append(key, String(value));
-      }
-    });
-
-    // Add image file if present
-    if (spaceData.image) {
-      formData.append('image', spaceData.image);
+    // If spaceData is FormData, use upload
+    if (spaceData instanceof FormData) {
+      console.log('API: Using upload endpoint for FormData');
+      return apiClient.upload('/vendor/rental-spaces', spaceData);
+    } else {
+      console.log('API: Using post endpoint for JSON');
+      // Send as regular JSON
+      return apiClient.post('/vendor/rental-spaces', spaceData);
     }
-
-    return apiClient.upload('/vendor/rental-spaces', formData);
   },
 
-  updateRentalSpace: async (id: string, spaceData: Partial<RentalSpace>) => {
-    return apiClient.patch(`/vendor/rental-spaces/${id}`, spaceData);
+  updateRentalSpace: async (id: string, spaceData: any) => {
+    // Check if spaceData is FormData (for file uploads)
+    if (spaceData instanceof FormData) {
+      return apiClient.upload(`/vendor/rental-spaces/${id}`, spaceData);
+    } else {
+      // Send as regular JSON
+      return apiClient.patch(`/vendor/rental-spaces/${id}`, spaceData);
+    }
   },
 
   deleteRentalSpace: async (id: string) => {
