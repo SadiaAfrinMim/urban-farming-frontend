@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
       { source: '/api/v1/user/:path*', destination: 'http://localhost:5000/api/v1/user/:path*' },
       // Produce / Marketplace Routes
       { source: '/api/v1/produces/:path*', destination: 'http://localhost:5000/api/v1/produces/:path*' },
+      { source: '/api/v1/produces/search', destination: 'http://localhost:5000/api/v1/produces/search' },
       { source: '/api/v1/marketplace/:path*', destination: 'http://localhost:5000/api/v1/marketplace/:path*' },
       // Rental / Spaces Routes
       { source: '/api/v1/rental/:path*', destination: 'http://localhost:5000/api/v1/rental/:path*' },

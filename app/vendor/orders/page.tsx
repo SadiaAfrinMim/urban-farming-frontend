@@ -14,10 +14,18 @@ interface Order {
     name: string;
     quantity: number;
     price: number;
+    image?: string;
   }>;
   totalAmount: number;
   status: string;
   createdAt: string;
+  produce?: {
+    id: string;
+    name: string;
+    image?: string;
+    price: number;
+    category: string;
+  };
 }
 
 export default function OrderManagement() {
@@ -111,13 +119,39 @@ export default function OrderManagement() {
 
             <div className="mb-4">
               <h4 className="font-medium mb-2">Items:</h4>
-              <div className="space-y-2">
-                {order.items.map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <span>{item.name} (x{item.quantity})</span>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+              <div className="space-y-3">
+                {order.produce ? (
+                  <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0">
+                      {order.produce.image ? (
+                        <img
+                          src={order.produce.image}
+                          alt={order.produce.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center">
+                          <span className="text-lg">🥕</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <span className="font-medium">{order.produce.name}</span>
+                      <span className="text-gray-500 text-sm ml-2">({order.produce.category})</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-medium">${order.produce.price.toFixed(2)}</span>
+                      <span className="text-gray-500 text-sm block">per unit</span>
+                    </div>
                   </div>
-                ))}
+                ) : (
+                  order.items.map((item, index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span>{item.name} (x{item.quantity})</span>
+                      <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 

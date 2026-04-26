@@ -35,22 +35,9 @@ export default function CommunityAndNotifications() {
 
   const fetchPosts = async () => {
     try {
-      // const data = await api.get('/vendor/posts');
+      const data = await api.get('/vendor/posts');
       // Mock data
-      setPosts([
-        {
-          id: '1',
-          title: 'Sustainable Farming Tips',
-          content: 'Here are some tips for maintaining soil health...',
-          createdAt: '2024-01-10T09:00:00Z',
-        },
-        {
-          id: '2',
-          title: 'New Organic Certification Process',
-          content: 'We\'ve updated our certification process...',
-          createdAt: '2024-01-05T14:00:00Z',
-        },
-      ]);
+    
     } catch (err) {
       console.error('Failed to fetch posts');
     }

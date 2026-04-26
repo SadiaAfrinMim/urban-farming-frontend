@@ -19,9 +19,24 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
     }
   };
 
+  const getStatusText = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'অনুমোদিত';
+      case 'pending':
+        return 'অপেক্ষমান';
+      case 'rejected':
+        return 'প্রত্যাখ্যাত';
+      case 'verified':
+        return 'যাচাইকৃত';
+      default:
+        return status;
+    }
+  };
+
   return (
     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusStyles(status)}`}>
-      {status}
+      {getStatusText(status)}
     </span>
   );
 };

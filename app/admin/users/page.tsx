@@ -1,40 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import api, { User } from '../../lib/api';
+import { useUsers, useUpdateUserStatus } from '@/app/hooks/useApi';
+import { useAuth } from '@/app/contexts/AuthContext';
+import { LoadingPage, ErrorPage, Card, Alert, Button } from '@/app/components/ui';
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { hasRole } = useAuth();
   const [filter, setFilter] = useState<string>('all');
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // Redirect if not admin
+  if (!hasRole('Admin')) {
+    return <ErrorPage title="Access Denied" message="You don't have permission to access this page." />;
+  }
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const usersData = await api.getUsers();
-      setUsers(usersData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'ইউজার লিস্ট পেতে সমস্যা হয়েছে');
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: users = [], isLoading, error, refetch } = useUsers();
+  const updateUserStatusMutation = useUpdateUserStatus();
 
-  const updateUserStatus = async (userId: number, status: string) => {
+  const handleStatusUpdate = async (userId: string, status: string) => {
     try {
-      setError(null);
-      await api.updateUserStatus(userId.toString(), status);
-      fetchUsers(); // Refresh data
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'স্ট্যাটাস আপডেট করা যাচ্ছে না');
+      await updateUserStatusMutation.mutateAsync({ userId, status });
+    } catch (error) {
+      // Error handled by mutation
     }
   };
 
@@ -43,45 +31,73 @@ export default function AdminUsersPage() {
     return user.role.toLowerCase() === filter;
   });
 
-  if (loading) {
+  if (isLoading) {
+    return <LoadingPage message="ইউজার লিস্ট লোড হচ্ছে..." />;
+  }
+
+  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-xl text-gray-600">লোড হচ্ছে...</div>
-      </div>
+      <ErrorPage
+        title="Error Loading Users"
+        message="ইউজার লিস্ট লোড করা যাচ্ছে না"
+        onRetry={() => refetch()}
+      />
     );
   }
+
+  const filterOptions = [
+    { value: 'all', label: 'সব ইউজার' },
+    { value: 'admin', label: 'এডমিন' },
+    { value: 'vendor', label: 'ভেন্ডর' },
+    { value: 'customer', label: 'কাস্টমার' },
+  ];
+
+  const statusOptions = [
+    { value: 'Active', label: 'সক্রিয়' },
+    { value: 'Pending', label: 'পেন্ডিং' },
+    { value: 'Suspended', label: 'নিষ্ক্রিয়' },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <Link href="/admin/dashboard" className="text-blue-600 hover:underline">← এডমিন ড্যাশবোর্ডে ফিরে যান</Link>
+          <Link href="/admin/dashboard" className="text-blue-600 hover:underline">
+            ← এডমিন ড্যাশবোর্ডে ফিরে যান
+          </Link>
         </div>
 
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">ইউজার ম্যানেজমেন্ট</h1>
 
-          <div className="flex gap-2">
+          <div className="flex gap-4 items-center">
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="all">সব ইউজার</option>
-              <option value="admin">এডমিন</option>
-              <option value="vendor">ভেন্ডর</option>
-              <option value="customer">কাস্টমার</option>
+              {filterOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
+
+            <Button onClick={() => refetch()} variant="outline" size="sm">
+              রিফ্রেশ
+            </Button>
           </div>
         </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
+        {updateUserStatusMutation.isError && (
+          <Alert
+            type="error"
+            message="স্ট্যাটাস আপডেট করা যাচ্ছে না"
+            className="mb-6"
+          />
         )}
 
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <Card shadow="md" className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full table-auto">
               <thead>
@@ -120,17 +136,20 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      {new Date(user.createdAt).toLocaleDateString('bn-BD')}
+                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString('bn-BD') : 'N/A'}
                     </td>
                     <td className="px-6 py-4">
                       <select
-                        value={user.status}
-                        onChange={(e) => updateUserStatus(user.id, e.target.value)}
-                        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={user.status || 'Active'}
+                        onChange={(e) => handleStatusUpdate(user.id, e.target.value)}
+                        disabled={updateUserStatusMutation.isPending}
+                        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                       >
-                        <option value="Active">সক্রিয়</option>
-                        <option value="Pending">পেন্ডিং</option>
-                        <option value="Suspended">নিষ্ক্রিয়</option>
+                        {statusOptions.map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
                     </td>
                   </tr>
@@ -144,7 +163,7 @@ export default function AdminUsersPage() {
               কোনো ইউজার পাওয়া যায়নি
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

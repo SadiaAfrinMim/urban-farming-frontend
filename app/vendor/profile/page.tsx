@@ -2,167 +2,408 @@
 
 import { useEffect, useState } from 'react';
 import { StatusBadge } from '../../components/StatusBadge';
-import api from '../../lib/api';
-
-interface VendorProfile {
-  id: string;
-  farmName: string;
-  farmLocation: string;
-  certificationStatus: 'Pending' | 'Approved' | 'Rejected';
-  certifications: string[];
-  profilePhoto?: string;
-}
+import { useVendorProfile, useUpdateVendorProfile } from '../../hooks/useApi';
+import { Card, Button, Input, Alert, LoadingSpinner } from '../../components/ui';
+import toast from 'react-hot-toast';
 
 export default function VendorProfile() {
-  const [profile, setProfile] = useState<VendorProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: profile, isLoading, error, refetch } = useVendorProfile();
+  const updateProfileMutation = useUpdateVendorProfile();
+
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    farmName: '',
-    farmLocation: '',
-    certifications: [] as File[],
-  });
+  const [certifications, setCertifications] = useState<File[]>([]);
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-  const fetchProfile = async () => {
-    try {
-      const data = await api.getVendorProfile();
-      setProfile(data);
-      setFormData({
-        farmName: data.farmName,
-        farmLocation: data.farmLocation,
-        certifications: [],
-      });
-    } catch (err) {
-      console.error('Failed to fetch profile:', err);
-      // Set mock data for demo
-      setProfile({
-        id: '1',
-        farmName: 'Green Valley Farm',
-        farmLocation: 'Dhaka, Bangladesh',
-        certificationStatus: 'Approved',
-        certifications: ['cert1.pdf', 'cert2.jpg'],
-      });
-      setFormData({
-        farmName: 'Green Valley Farm',
-        farmLocation: 'Dhaka, Bangladesh',
-        certifications: [],
-      });
-    } finally {
-      setLoading(false);
+    const formData = new FormData();
+
+    // Add text fields
+    const formElements = e.currentTarget.elements as any;
+    formData.append('farmName', formElements.farmName.value);
+    formData.append('farmLocation', formElements.farmLocation.value);
+
+    // Add profile photo if selected
+    if (profilePhoto) {
+      formData.append('profilePhoto', profilePhoto);
     }
+
+    // Add certifications
+    if (certifications.length > 0) {
+      certifications.forEach((cert) => {
+        formData.append('certification', cert);
+      });
+    }
+
+    updateProfileMutation.mutate(formData as any, {
+      onSuccess: () => {
+        setEditing(false);
+        setCertifications([]);
+        setProfilePhoto(null);
+        // Clear file inputs
+        const profilePhotoInput = document.getElementById('profilePhoto') as HTMLInputElement;
+        const certInput = document.querySelector('input[accept=".pdf,.jpg,.jpeg,.png"]') as HTMLInputElement;
+        if (profilePhotoInput) profilePhotoInput.value = '';
+        if (certInput) certInput.value = '';
+        refetch();
+      },
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await api.updateVendorProfile({
-        farmName: formData.farmName,
-        farmLocation: formData.farmLocation,
-        certifications: formData.certifications,
-      });
-      setEditing(false);
-      // Refresh profile data
-      fetchProfile();
-    } catch (err) {
-      console.error('Failed to update profile:', err);
-      alert('Failed to update profile. Please try again.');
-    }
+  const removeCertification = (index: number) => {
+    setCertifications(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeProfilePhoto = () => {
+    setProfilePhoto(null);
+    // Reset the input field
+    const input = document.getElementById('profilePhoto') as HTMLInputElement;
+    if (input) input.value = '';
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFormData({ ...formData, certifications: Array.from(e.target.files) });
+    const files = e.target.files;
+    if (files) {
+      const fileArray = Array.from(files);
+      // Validate file types and sizes
+      const validFiles = fileArray.filter(file => {
+        const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (!validTypes.includes(file.type)) {
+          toast.error(`${file.name}: শুধুমাত্র PDF এবং ইমেজ ফাইল গ্রহণযোগ্য`);
+          return false;
+        }
+
+        if (file.size > maxSize) {
+          toast.error(`${file.name}: ফাইল সাইজ 5MB এর বেশি হতে পারবে না`);
+          return false;
+        }
+
+        return true;
+      });
+
+      setCertifications(prev => [...prev, ...validFiles]);
     }
   };
 
-  if (loading) {
-    return <div className="p-8">Loading...</div>;
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate image types and sizes
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+
+      if (!validTypes.includes(file.type)) {
+        toast.error('শুধুমাত্র JPEG, PNG এবং WebP ইমেজ গ্রহণযোগ্য');
+        return;
+      }
+
+      if (file.size > maxSize) {
+        toast.error('প্রোফাইল ফটো 5MB এর বেশি হতে পারবে না');
+        return;
+      }
+
+      setProfilePhoto(file);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <Card className="text-center py-16">
+            <LoadingSpinner size="lg" className="mx-auto mb-4" />
+            <p className="text-gray-600">প্রোফাইল লোড হচ্ছে...</p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <Alert type="error" message="প্রোফাইল লোড করা যাচ্ছে না। অনুগ্রহ করে রিফ্রেশ করে আবার চেষ্টা করুন।" />
+          <div className="mt-4 text-center">
+            <Button onClick={() => refetch()} variant="primary">
+              রিফ্রেশ করুন
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">Farm Profile & Certification</h1>
-
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Farm Information</h2>
-          <button
-            onClick={() => setEditing(!editing)}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            {editing ? 'Cancel' : 'Edit Profile'}
-          </button>
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">ফার্ম প্রোফাইল এবং সার্টিফিকেশন</h1>
+          <p className="text-gray-600 mt-2">আপনার ফার্মের তথ্য এবং সার্টিফিকেশন পরিচালনা করুন</p>
         </div>
 
+        {updateProfileMutation.isError && (
+          <Alert
+            type="error"
+            message="প্রোফাইল আপডেট করা যাচ্ছে না। অনুগ্রহ করে আবার চেষ্টা করুন।"
+            className="mb-6"
+          />
+        )}
+
+        <Card className="mb-6">
+          {/* Profile Photo Display */}
+          <div className="flex items-center mb-6">
+            <div className="flex-shrink-0 mr-6">
+              {profile?.profilePhoto ? (
+                <img
+                  src={profile.profilePhoto}
+                  alt="প্রোফাইল ফটো"
+                  className="w-24 h-24 object-cover rounded-full border-4 border-green-100 shadow-lg"
+                />
+              ) : (
+                <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold text-gray-900">ফার্ম তথ্য</h2>
+              <p className="text-gray-600 mt-1">{profile?.farmName || 'ফার্মের নাম যোগ করুন'}</p>
+            </div>
+            <Button
+              onClick={() => setEditing(!editing)}
+              variant="outline"
+              size="sm"
+            >
+              {editing ? 'বাতিল করুন' : 'প্রোফাইল এডিট করুন'}
+            </Button>
+          </div>
+
         {editing ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <Input
+              label="ফার্মের নাম *"
+              name="farmName"
+              defaultValue={profile?.farmName || ''}
+              placeholder="আপনার ফার্মের নাম লিখুন"
+              fullWidth
+              required
+            />
+
+            <Input
+              label="ফার্মের অবস্থান *"
+              name="farmLocation"
+              defaultValue={profile?.farmLocation || ''}
+              placeholder="ফার্মের অবস্থান লিখুন"
+              fullWidth
+              required
+            />
+
             <div>
-              <label className="block text-sm font-medium mb-2">Farm Name</label>
-              <input
-                type="text"
-                value={formData.farmName}
-                onChange={(e) => setFormData({ ...formData, farmName: e.target.value })}
-                className="w-full p-2 border rounded"
-                required
-              />
+              <label htmlFor="profilePhoto" className="block text-sm font-semibold text-gray-800 mb-2">
+                প্রোফাইল ফটো
+              </label>
+              <div className="relative">
+                <input
+                  type="file"
+                  name="profilePhoto"
+                  id="profilePhoto"
+                  accept="image/*"
+                  onChange={handleProfilePhotoChange}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                />
+              </div>
+              <p className="text-sm text-gray-600 mt-1">প্রোফাইল ফটো আপলোড করুন (ঐচ্ছিক, সর্বোচ্চ 5MB)</p>
+              {profilePhoto && (
+                <div className="mt-2 relative inline-block">
+                  <img
+                    src={URL.createObjectURL(profilePhoto)}
+                    alt="প্রোফাইল ফটো প্রিভিউ"
+                    className="w-20 h-20 object-cover rounded-full border border-gray-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeProfilePhoto}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                    title="প্রোফাইল ফটো রিমুভ করুন"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Farm Location</label>
-              <input
-                type="text"
-                value={formData.farmLocation}
-                onChange={(e) => setFormData({ ...formData, farmLocation: e.target.value })}
-                className="w-full p-2 border rounded"
-                required
-              />
+
+            <div className="flex gap-3">
+              <Button
+                type="submit"
+                loading={updateProfileMutation.isPending}
+                variant="primary"
+              >
+                পরিবর্তন সংরক্ষণ করুন
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setEditing(false)}
+                variant="outline"
+              >
+                বাতিল করুন
+              </Button>
             </div>
-            <button type="submit" className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-              Save Changes
-            </button>
           </form>
         ) : (
           <div className="space-y-4">
-            <div>
-              <span className="font-medium">Farm Name:</span> {profile?.farmName}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <span className="text-sm font-medium text-gray-500">ফার্মের নাম:</span>
+                <p className="text-lg font-semibold text-gray-900 mt-1">{profile?.farmName}</p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-500">অবস্থান:</span>
+                <p className="text-lg font-semibold text-gray-900 mt-1">{profile?.farmLocation}</p>
+              </div>
             </div>
             <div>
-              <span className="font-medium">Location:</span> {profile?.farmLocation}
-            </div>
-            <div>
-              <span className="font-medium">Status:</span>
-              <StatusBadge status={profile?.certificationStatus || 'Pending'} />
+              <span className="text-sm font-medium text-gray-500">সার্টিফিকেশন স্ট্যাটাস:</span>
+              <div className="mt-1">
+                <StatusBadge status={profile?.certificationStatus || 'Pending'} />
+              </div>
             </div>
           </div>
         )}
-      </div>
+        </Card>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Certification Documents</h2>
+        <Card>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">সার্টিফিকেশন ডকুমেন্টস</h2>
 
-        <div className="mb-4">
-          <input
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            accept=".pdf,.jpg,.jpeg,.png"
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-          />
-          <p className="text-sm text-gray-500 mt-2">Upload PDF or image files (max 5MB each)</p>
-        </div>
-
-        <div className="space-y-2">
-          <h3 className="font-medium">Uploaded Documents:</h3>
-          {profile?.certifications.map((cert, index) => (
-            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-              <span>{cert}</span>
-              <button className="text-red-600 hover:text-red-800">Remove</button>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
+                নতুন ডকুমেন্ট আপলোড করুন
+              </label>
+              <div className="relative">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                />
+              </div>
+              <p className="text-sm text-gray-600 mt-1">PDF বা ইমেজ ফাইল আপলোড করুন (প্রতিটি সর্বোচ্চ 5MB)। ইমেজগুলো ক্লিক করে বড় করে দেখতে পারবেন।</p>
             </div>
-          ))}
-        </div>
+
+            {profile?.certifications && profile.certifications.length > 0 && (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">আপলোড করা ডকুমেন্টস:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {profile.certifications.map((cert, index) => {
+                    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(cert);
+                    return (
+                      <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                        {isImage ? (
+                          <div className="relative mb-2">
+                            <img
+                              src={cert}
+                              alt={`সার্টিফিকেশন ${index + 1}`}
+                              className="w-full h-24 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => window.open(cert, '_blank')}
+                              onError={(e) => {
+                                // If image fails to load, show document icon
+                                e.currentTarget.style.display = 'none';
+                                const parent = e.currentTarget.parentElement;
+                                if (parent) {
+                                  const iconDiv = parent.querySelector('.fallback-icon') as HTMLElement;
+                                  if (iconDiv) iconDiv.style.display = 'flex';
+                                }
+                              }}
+                            />
+                            <div className="fallback-icon hidden items-center gap-3">
+                              <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <span className="text-sm font-medium text-gray-900 truncate flex-1">সার্টিফিকেশন {index + 1}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3 mb-2">
+                            <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span className="text-sm font-medium text-gray-900 truncate flex-1">সার্টিফিকেশন {index + 1}</span>
+                          </div>
+                        )}
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            // TODO: Implement remove functionality
+                            toast.error('এক্সিস্টিং ডকুমেন্ট রিমুভ ফিচার এখনও ইমপ্লিমেন্ট করা হয়নি');
+                          }}
+                        >
+                          রিমুভ করুন
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {certifications.length > 0 && (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">নতুন আপলোড করা ডকুমেন্টস:</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {certifications.map((file, index) => (
+                    <div key={index} className="relative bg-blue-50 rounded-lg p-3 border border-blue-200">
+                      {file.type.startsWith('image/') ? (
+                        <div className="relative">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`প্রিভিউ: ${file.name}`}
+                            className="w-full h-24 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
+                            onClick={() => window.open(URL.createObjectURL(file), '_blank')}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeCertification(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                            title="ফাইল রিমুভ করুন"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <svg className="w-8 h-8 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-blue-800 truncate">{file.name}</p>
+                            <p className="text-xs text-blue-600">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeCertification(index)}
+                            className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors flex-shrink-0"
+                            title="ফাইল রিমুভ করুন"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );

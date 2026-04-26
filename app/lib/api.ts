@@ -74,6 +74,7 @@ export interface Order {
   status: string;
   createdAt: string;
   items?: any[];
+  produce?: Produce;
 }
 
 export interface User {
@@ -97,94 +98,300 @@ export interface VendorProfile {
 }
 
 // API Base URL
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5000/api/v1';
 
-// Helper function for API calls
-const apiCall = async (endpoint: string, options: RequestInit = {}) => {
-  const token = localStorage.getItem('accessToken'); // Assuming JWT token is stored in localStorage
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+// Custom error class for API errors
+export class ApiError extends Error {
+  constructor(
+    message: string,    
+    public status: number,
+    public data?: any
+  ) {
+    super(message);
+    this.name = 'ApiError';
   }
+}
 
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers,
-    ...options,
-  });
+// Enhanced HTTP client with proper error handling
+const apiClient = {
+  async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
 
-  if (!res.ok) {
-    throw new Error(`API call failed: ${res.status} ${res.statusText}`);
-  }
+    // Add Authorization header if token is available in localStorage
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
-  return res.json();
+    // Cookies are also sent automatically by the browser
+
+    // Log API call details
+    const startTime = Date.now();
+    console.log(`🚀 API Call: ${options.method || 'GET'} ${API_BASE_URL}${endpoint}`, {
+      headers: { ...headers },
+      body: options.body,
+      timestamp: new Date().toISOString()
+    });
+
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers,
+        ...options,
+      });
+
+      let data: any;
+      let rawResponseText = '';
+      try {
+        rawResponseText = await response.text();
+        data = rawResponseText ? JSON.parse(rawResponseText) : {};
+      } catch (jsonError) {
+        console.warn('Failed to parse JSON response:', jsonError, 'Raw response:', rawResponseText);
+        data = { message: 'Unknown error occurred', rawResponse: rawResponseText };
+      }
+
+      // Log response details
+      const duration = Date.now() - startTime;
+      console.log(`✅ API Response: ${response.status} ${API_BASE_URL}${endpoint}`, {
+        status: response.status,
+        statusText: response.statusText,
+        data: data,
+        duration: `${duration}ms`
+      });
+
+      if (!response.ok) {
+        console.error('❌ API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: `${API_BASE_URL}${endpoint}`,
+          hasResponseBody: !!rawResponseText,
+          responseLength: rawResponseText.length,
+          rawResponseText: rawResponseText.substring(0, 200), // First 200 chars for debugging
+          parsedData: data,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+
+        // Provide more specific error messages
+        let errorMessage = data.message || data.error;
+        if (!errorMessage) {
+          if (response.status === 401) {
+            errorMessage = 'Authentication required. Please login again.';
+          } else if (response.status === 403) {
+            errorMessage = 'Access denied. Insufficient permissions.';
+          } else if (response.status === 404) {
+            errorMessage = 'Requested resource not found.';
+          } else if (response.status >= 500) {
+            errorMessage = 'Server error. Please try again later.';
+          } else {
+            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          }
+        }
+
+        throw new ApiError(
+          errorMessage,
+          response.status,
+          { ...data, rawResponse: rawResponseText, url: `${API_BASE_URL}${endpoint}` }
+        );
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+
+      // Network or other errors
+      throw new ApiError(
+        error instanceof Error ? error.message : 'Network error occurred',
+        0,
+        null
+      );
+    }
+  },
+
+  async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint);
+  },
+
+  async post<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  },
+
+  async put<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  },
+
+  async patch<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  },
+
+  async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+    });
+  },
+
+  async upload<T>(endpoint: string, formData: FormData): Promise<T> {
+    const headers: HeadersInit = {};
+    // Cookies are sent automatically with all requests
+
+    // Add Authorization header if token is available in localStorage
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        data = { message: 'Upload failed' };
+      }
+
+      if (!response.ok) {
+        throw new ApiError(
+          data.message || `Upload failed: ${response.status}`,
+          response.status,
+          data
+        );
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+      throw new ApiError(
+        error instanceof Error ? error.message : 'Upload failed',
+        0,
+        null
+      );
+    }
+  },
 };
 
 // API Service
 const api = {
   // Produce / Marketplace
   getProduces: async (): Promise<Produce[]> => {
-    const data: ApiResponse<Produce[]> = await apiCall('/produces');
+    const data = await apiClient.get<ApiResponse<Produce[]>>('/produces');
     return Array.isArray(data.data) ? data.data : [];
   },
 
-  getProduce: async (id: number): Promise<Produce> => {
-    const data: ApiResponse<Produce> = await apiCall(`/produces/${id}`);
+  searchProduces: async (query: string): Promise<Produce[]> => {
+    const data = await apiClient.get<ApiResponse<Produce[]>>(`/produces/search?q=${encodeURIComponent(query)}`);
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  getProduce: async (id: string): Promise<Produce> => {
+    const data = await apiClient.get<ApiResponse<Produce>>(`/produces/${id}`);
     return data.data;
   },
 
-  // Rental Spaces
+  // Rental Spaces (corrected endpoint)
   getRentalSpaces: async (): Promise<RentalSpace[]> => {
-    const data: ApiResponse<RentalSpace[]> = await apiCall('/spaces');
+    const data = await apiClient.get<ApiResponse<RentalSpace[]>>('/rentals');
     return Array.isArray(data.data) ? data.data : [];
   },
 
-  getRentalSpace: async (id: number): Promise<RentalSpace> => {
-    const data: ApiResponse<RentalSpace> = await apiCall(`/spaces/${id}`);
+  getRentalSpace: async (id: string): Promise<RentalSpace> => {
+    const data = await apiClient.get<ApiResponse<RentalSpace>>(`/rentals/${id}`);
     return data.data;
+  },
+
+  searchRentalSpaces: async (query: string): Promise<RentalSpace[]> => {
+    const data = await apiClient.get<ApiResponse<RentalSpace[]>>(`/rentals/search?q=${encodeURIComponent(query)}`);
+    return Array.isArray(data.data) ? data.data : [];
   },
 
   // Community
   getCommunityPosts: async (): Promise<CommunityPost[]> => {
-    const data: ApiResponse<CommunityPost[]> = await apiCall('/community/posts');
+    const data = await apiClient.get<ApiResponse<CommunityPost[]>>('/community/posts');
     return Array.isArray(data.data) ? data.data : [];
   },
 
   createCommunityPost: async (postData: { title: string; content: string }) => {
-    return apiCall('/community/posts', {
-      method: 'POST',
-      body: JSON.stringify(postData),
-    });
+    return apiClient.post('/community/posts', postData);
   },
 
-  // Sustainability
-  getSustainabilityTips: async (): Promise<SustainabilityTip[]> => {
-    const data: ApiResponse<SustainabilityTip[]> = await apiCall('/sustainability/tips');
+  updateCommunityPost: async (id: number, postData: { title: string; content: string }) => {
+    return apiClient.patch(`/community/posts/${id}`, postData);
+  },
+
+  deleteCommunityPost: async (id: number) => {
+    return apiClient.delete(`/community/posts/${id}`);
+  },
+
+  // Sustainability (corrected endpoint - using certs instead of tips)
+  getSustainabilityCerts: async (): Promise<SustainabilityTip[]> => {
+    const data = await apiClient.get<ApiResponse<SustainabilityTip[]>>('/sustainability/certs');
     return Array.isArray(data.data) ? data.data : [];
+  },
+
+  createSustainabilityCert: async (certData: Omit<SustainabilityTip, 'id'>) => {
+    return apiClient.post('/sustainability/certs', certData);
+  },
+
+  updateSustainabilityCert: async (id: string, certData: Partial<SustainabilityTip>) => {
+    return apiClient.patch(`/sustainability/certs/${id}`, certData);
+  },
+
+  deleteSustainabilityCert: async (id: string) => {
+    return apiClient.delete(`/sustainability/certs/${id}`);
   },
 
   // Orders
   getOrders: async (): Promise<Order[]> => {
-    const data: ApiResponse<Order[]> = await apiCall('/orders');
+    const data = await apiClient.get<ApiResponse<Order[]>>('/orders');
     return Array.isArray(data.data) ? data.data : [];
   },
 
   createOrder: async (orderData: { items: any[]; totalAmount: number }) => {
-    return apiCall('/orders', {
-      method: 'POST',
-      body: JSON.stringify(orderData),
-    });
+    return apiClient.post('/orders', orderData);
+  },
+
+  getOrder: async (id: string): Promise<Order> => {
+    const data = await apiClient.get<ApiResponse<Order>>(`/orders/${id}`);
+    return data.data;
+  },
+
+  updateOrder: async (id: string, orderData: Partial<Order>) => {
+    return apiClient.patch(`/orders/${id}`, orderData);
+  },
+
+  deleteOrder: async (id: string) => {
+    return apiClient.delete(`/orders/${id}`);
   },
 
   // Auth
   login: async (email: string, password: string) => {
-    return apiCall('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    const response = await apiClient.post('/auth/login', { email, password });
+    // Store access token in localStorage as backup for Authorization header
+    if (response.success && response.data?.accessToken) {
+      localStorage.setItem('accessToken', response.data.accessToken);
+    }
+    return response;
   },
 
   register: async (userData: {
@@ -196,155 +403,267 @@ const api = {
     farmLocation?: string;
     adminCode?: string;
   }) => {
-    return apiCall('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
+    return apiClient.post('/auth/register', userData);
   },
 
   refreshToken: async (refreshToken: string) => {
-    return apiCall('/auth/refresh-token', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken }),
-    });
+    const response = await apiClient.post('/auth/refresh-token', { refreshToken });
+    // Update localStorage token if refresh was successful
+    if (response.success && response.data?.accessToken) {
+      localStorage.setItem('accessToken', response.data.accessToken);
+    }
+    return response;
   },
 
   changePassword: async (passwordData: { oldPassword: string; newPassword: string }) => {
-    return apiCall('/auth/change-password', {
-      method: 'POST',
-      body: JSON.stringify(passwordData),
-    });
+    return apiClient.post('/auth/change-password', passwordData);
+  },
+
+  logout: async () => {
+    const response = await apiClient.post('/auth/logout');
+    // Clear localStorage token
+    localStorage.removeItem('accessToken');
+    return response;
+  },
+
+  forgotPassword: async (email: string) => {
+    return apiClient.post('/auth/forgot-password', { email });
   },
 
   // Users
   getUsers: async (): Promise<User[]> => {
-    const data: ApiResponse<User[]> = await apiCall('/user');
+    const data = await apiClient.get<ApiResponse<User[]>>('/admin/users');
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  getAllUsers: async (filters?: any): Promise<User[]> => {
+    const queryString = filters ? new URLSearchParams(filters).toString() : '';
+    const url = queryString ? `/admin/users?${queryString}` : '/admin/users';
+    const data = await apiClient.get<ApiResponse<User[]>>(url);
     return Array.isArray(data.data) ? data.data : [];
   },
 
   updateUserStatus: async (userId: string, status: string) => {
-    return apiCall(`/user/${userId}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    });
+    return apiClient.patch(`/admin/users/${userId}/status`, { status });
+  },
+
+  updateUserRole: async (userId: string, role: string) => {
+    return apiClient.patch(`/admin/users/${userId}/role`, { role });
   },
 
   getMyProfile: async () => {
-    return apiCall('/user/me');
+    return apiClient.get('/user/me');
   },
 
   updateProfile: async (profileData: any) => {
-    return apiCall('/user/update-my-profile', {
-      method: 'PATCH',
-      body: JSON.stringify(profileData),
-    });
+    return apiClient.patch('/user/update-my-profile', profileData);
+  },
+
+  createCustomer: async (userData: { name: string; email: string; password: string }) => {
+    return apiClient.post('/user/create-customer', userData);
+  },
+
+  createVendor: async (userData: { name: string; email: string; password: string }) => {
+    return apiClient.post('/user/create-vendor', userData);
+  },
+
+  createAdmin: async (userData: { name: string; email: string; password: string; adminCode: string }) => {
+    return apiClient.post('/user/create-admin', userData);
   },
 
   // Vendor APIs
-  getVendorDashboardStats: async () => {
-    return apiCall('/vendor/dashboard-stats');
-  },
-
   getVendorProfile: async (): Promise<VendorProfile> => {
-    const data: ApiResponse<VendorProfile> = await apiCall('/vendor/profile');
+    const data = await apiClient.get<ApiResponse<VendorProfile>>('/vendor/profile');
     return data.data;
   },
 
-  updateVendorProfile: async (profileData: Partial<VendorProfile>) => {
+  updateVendorProfile: async (formData: FormData) => {
+    return apiClient.upload('/vendor/profile', formData);
+  },
+
+  // Admin APIs
+  // User Management
+  getAllUsers: async (filters?: any) => {
+    const queryString = filters ? new URLSearchParams(filters).toString() : '';
+    const url = queryString ? `/admin/users?${queryString}` : '/admin/users';
+    const data = await apiClient.get<ApiResponse<User[]>>(url);
+    return data.data;
+  },
+
+  updateUserStatus: async (userId: string, status: string) => {
+    return apiClient.patch(`/admin/users/${userId}/status`, { status });
+  },
+
+  updateUserRole: async (userId: string, role: string) => {
+    return apiClient.patch(`/admin/users/${userId}/role`, { role });
+  },
+
+  // Certification Management
+  getPendingCertifications: async () => {
+    const data = await apiClient.get<ApiResponse<any[]>>('/admin/certifications/pending');
+    return data.data;
+  },
+
+  approveCertification: async (vendorId: string) => {
+    return apiClient.patch(`/admin/certifications/${vendorId}/approve`);
+  },
+
+  rejectCertification: async (vendorId: string, reason?: string) => {
+    return apiClient.patch(`/admin/certifications/${vendorId}/reject`, { reason });
+  },
+
+  // Produce Management
+  getPendingProduces: async () => {
+    const data = await apiClient.get<ApiResponse<any[]>>('/admin/produces/pending');
+    return data.data;
+  },
+
+  approveProduce: async (produceId: string) => {
+    return apiClient.patch(`/admin/produces/${produceId}/approve`);
+  },
+
+  rejectProduce: async (produceId: string) => {
+    return apiClient.patch(`/admin/produces/${produceId}/reject`);
+  },
+
+  // Post Moderation
+  getAllPosts: async () => {
+    const data = await apiClient.get<ApiResponse<any[]>>('/admin/posts');
+    return data.data;
+  },
+
+  approvePost: async (postId: string) => {
+    return apiClient.patch(`/admin/posts/${postId}/approve`);
+  },
+
+  deletePost: async (postId: string) => {
+    return apiClient.delete(`/admin/posts/${postId}`);
+  },
+
+  // Report Management
+  getReports: async () => {
+    const data = await apiClient.get<ApiResponse<any[]>>('/admin/reports');
+    return data.data;
+  },
+
+  resolveReport: async (reportId: string) => {
+    return apiClient.patch(`/admin/reports/${reportId}/resolve`);
+  },
+
+  // Order Analytics
+  getAllOrders: async (filters?: any) => {
+    const queryString = filters ? new URLSearchParams(filters).toString() : '';
+    const url = queryString ? `/admin/orders?${queryString}` : '/admin/orders';
+    const data = await apiClient.get<ApiResponse<any[]>>(url);
+    return data.data;
+  },
+
+  // Analytics
+  getRentalAnalytics: async () => {
+    const data = await apiClient.get<ApiResponse<any>>('/admin/analytics/rental');
+    return data.data;
+  },
+
+  getRevenueAnalytics: async () => {
+    const data = await apiClient.get<ApiResponse<any>>('/admin/analytics/revenue');
+    return data.data;
+  },
+
+  // System Logs
+  getRateLimitLogs: async (filters?: any) => {
+    const queryString = filters ? new URLSearchParams(filters).toString() : '';
+    const url = queryString ? `/admin/logs/rate-limit?${queryString}` : '/admin/logs/rate-limit';
+    const data = await apiClient.get<ApiResponse<any[]>>(url);
+    return data.data;
+  },
+
+  // Announcements
+  createAnnouncement: async (announcementData: { title: string; content: string; target: string }) => {
+    return apiClient.post('/admin/announcements', announcementData);
+  },
+
+  getAnnouncements: async () => {
+    const data = await apiClient.get<ApiResponse<any[]>>('/admin/announcements');
+    return data.data;
+  },
+
+  deleteAnnouncement: async (announcementId: string) => {
+    return apiClient.delete(`/admin/announcements/${announcementId}`);
+  },
+
+  getVendorProduces: async (): Promise<Produce[]> => {
+    const data = await apiClient.get<ApiResponse<Produce[]>>('/vendor/produces');
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  createProduce: async (produceData: Omit<Produce, 'id' | 'createdAt' | 'updatedAt' | 'image'> & { image?: File }) => {
     const formData = new FormData();
 
     // Add text fields
-    Object.entries(profileData).forEach(([key, value]) => {
-      if (key !== 'certifications' && value !== undefined) {
+    Object.entries(produceData).forEach(([key, value]) => {
+      if (key !== 'image' && value !== undefined) {
         formData.append(key, String(value));
       }
     });
 
-    // Add certification files if any
-    if (profileData.certifications && Array.isArray(profileData.certifications)) {
-      profileData.certifications.forEach((cert, index) => {
-        if (cert instanceof File) {
-          formData.append('certification', cert);
-        }
-      });
+    // Add image file if present
+    if (produceData.image) {
+      formData.append('image', produceData.image);
     }
 
-    return fetch(`${API_BASE_URL}/vendor/profile`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: formData,
-    }).then(res => res.json());
-  },
-
-  getVendorProduces: async (): Promise<Produce[]> => {
-    const data: ApiResponse<Produce[]> = await apiCall('/vendor/produces');
-    return Array.isArray(data.data) ? data.data : [];
-  },
-
-  createProduce: async (produceData: Omit<Produce, 'id' | 'createdAt' | 'updatedAt'>) => {
-    return apiCall('/vendor/produces', {
-      method: 'POST',
-      body: JSON.stringify(produceData),
-    });
+    return apiClient.upload('/vendor/produces', formData);
   },
 
   updateProduce: async (id: string, produceData: Partial<Produce>) => {
-    return apiCall(`/vendor/produces/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(produceData),
-    });
+    return apiClient.patch(`/vendor/produces/${id}`, produceData);
   },
 
   deleteProduce: async (id: string) => {
-    return apiCall(`/vendor/produces/${id}`, {
-      method: 'DELETE',
-    });
+    return apiClient.delete(`/vendor/produces/${id}`);
   },
 
   getVendorRentalSpaces: async (): Promise<RentalSpace[]> => {
-    const data: ApiResponse<RentalSpace[]> = await apiCall('/vendor/rental-spaces');
+    const data = await apiClient.get<ApiResponse<RentalSpace[]>>('/vendor/rental-spaces');
     return Array.isArray(data.data) ? data.data : [];
   },
 
-  createRentalSpace: async (spaceData: Omit<RentalSpace, 'id' | 'createdAt' | 'updatedAt' | 'available'>) => {
-    return apiCall('/vendor/rental-spaces', {
-      method: 'POST',
-      body: JSON.stringify(spaceData),
+  createRentalSpace: async (spaceData: Omit<RentalSpace, 'id' | 'createdAt' | 'updatedAt' | 'available' | 'image'> & { image?: File }) => {
+    const formData = new FormData();
+
+    // Add text fields
+    Object.entries(spaceData).forEach(([key, value]) => {
+      if (key !== 'image' && value !== undefined) {
+        formData.append(key, String(value));
+      }
     });
+
+    // Add image file if present
+    if (spaceData.image) {
+      formData.append('image', spaceData.image);
+    }
+
+    return apiClient.upload('/vendor/rental-spaces', formData);
   },
 
   updateRentalSpace: async (id: string, spaceData: Partial<RentalSpace>) => {
-    return apiCall(`/vendor/rental-spaces/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(spaceData),
-    });
+    return apiClient.patch(`/vendor/rental-spaces/${id}`, spaceData);
   },
 
   deleteRentalSpace: async (id: string) => {
-    return apiCall(`/vendor/rental-spaces/${id}`, {
-      method: 'DELETE',
-    });
+    return apiClient.delete(`/vendor/rental-spaces/${id}`);
+  },
+
+  toggleRentalSpaceAvailability: async (id: string) => {
+    return apiClient.patch(`/vendor/rental-spaces/${id}/availability`, {});
   },
 
   updatePlantStatus: async (updateData: { rentalSpaceId: string; plantStatus?: string; lastWatered?: string }) => {
-    return apiCall('/vendor/plant-update', {
-      method: 'PATCH',
-      body: JSON.stringify(updateData),
-    });
+    return apiClient.patch('/vendor/plant-update', updateData);
   },
 
   getVendorOrders: async (): Promise<Order[]> => {
-    const data: ApiResponse<Order[]> = await apiCall('/vendor/orders');
+    const data = await apiClient.get<ApiResponse<Order[]>>('/vendor/orders');
     return Array.isArray(data.data) ? data.data : [];
-  },
-
-  updateOrderStatus: async (orderId: string, status: string) => {
-    return apiCall(`/orders/${orderId}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    });
   },
 };
 

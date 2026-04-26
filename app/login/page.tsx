@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { login, loading } = useAuth();
 
   const fillAdminCredentials = () => {
     setEmail('admin@example.com');
@@ -20,18 +20,12 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setLoading(true);
       setError(null);
-      
-      const data = await api.login(email, password);
-      localStorage.setItem('token', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
+
+      await login(email, password);
       router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'লগইন ব্যর্থ');
-    } finally {
-      setLoading(false);
     }
   };
 

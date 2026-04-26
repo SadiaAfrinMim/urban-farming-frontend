@@ -27,7 +27,7 @@ export default function UsersPage() {
       setLoading(true);
       const res = await fetch('/api/user', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          // Authorization header not needed - cookies are sent automatically
         }
       });
       if (!res.ok) throw new Error('ইউজার লিস্ট পেতে সমস্যা হয়েছে');

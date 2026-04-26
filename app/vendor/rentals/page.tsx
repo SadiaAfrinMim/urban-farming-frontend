@@ -76,12 +76,6 @@ export default function RentalSpaceManagement() {
     }
   };
 
-  const handleAddSpace = async (data: any) => {
-    // Handle add rental space
-    console.log('Adding space:', data);
-    setShowAddForm(false);
-  };
-
   if (loading) {
     return <div className="p-8">Loading rental spaces...</div>;
   }
