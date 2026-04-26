@@ -109,6 +109,12 @@ export default function Navbar() {
               >
                 🌍 সাসটেইনেবিলিটি
               </Link>
+              <Link
+                href="/profile"
+                className={`text-gray-700 hover:text-green-600 px-4 py-2 rounded-lg transition-all duration-200 font-medium ${pathname === '/profile' ? 'bg-gradient-to-r from-green-100 to-blue-100 text-green-700 shadow-md' : 'hover:bg-gray-50'}`}
+              >
+                👤 প্রোফাইল
+              </Link>
             </>
           )}
 
@@ -185,6 +191,12 @@ export default function Navbar() {
               >
                 পোস্ট মডারেশন
               </Link>
+              <Link
+                href="/profile"
+                className={`text-gray-600 hover:text-blue-600 px-3 py-2 rounded ${pathname === '/profile' ? 'text-blue-600 font-medium' : ''}`}
+              >
+                প্রোফাইল
+              </Link>
             </>
           )}
 
@@ -225,6 +237,20 @@ export default function Navbar() {
 
               {dropdownOpen && (
                 <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg mx-2 font-medium transition-colors"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    👤 প্রোফাইল
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg mx-2 font-medium transition-colors"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    ⚙️ সেটিংস
+                  </Link>
                   <button
                     onClick={logout}
                     className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg mx-2 font-medium transition-colors"

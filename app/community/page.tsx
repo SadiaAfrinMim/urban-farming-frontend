@@ -36,8 +36,7 @@ export default function CommunityPage() {
       setPosting(true);
       setError(null);
       await api.createCommunityPost({
-        title: '',
-        content: newPost
+        postContent: newPost
       });
 
       setNewPost('');

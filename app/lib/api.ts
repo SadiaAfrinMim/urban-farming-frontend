@@ -93,6 +93,19 @@ export interface VendorProfile {
   updatedAt: string;
 }
 
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Admin' | 'Vendor' | 'Customer';
+  status: 'Active' | 'Pending' | 'Suspended';
+  profileData?: {
+    farmName?: string;
+    farmLocation?: string;
+    certificationStatus?: string;
+  };
+}
+
 // API Base URL
 const API_BASE_URL = 'http://localhost:5000/api/v1';
 
@@ -327,11 +340,16 @@ const api = {
     return Array.isArray(data.data) ? data.data : [];
   },
 
-  createCommunityPost: async (postData: { title: string; content: string }) => {
+  getCommunityPost: async (id: number): Promise<CommunityPost> => {
+    const data = await apiClient.get<ApiResponse<CommunityPost>>(`/community/posts/${id}`);
+    return data.data;
+  },
+
+  createCommunityPost: async (postData: { postContent: string }) => {
     return apiClient.post('/community/posts', postData);
   },
 
-  updateCommunityPost: async (id: number, postData: { title: string; content: string }) => {
+  updateCommunityPost: async (id: number, postData: { postContent: string }) => {
     return apiClient.patch(`/community/posts/${id}`, postData);
   },
 
@@ -465,7 +483,17 @@ const api = {
   },
 
   updateProfile: async (profileData: any) => {
-    return apiClient.patch('/user/update-my-profile', profileData);
+    // Check if profileData is FormData (for file uploads)
+    if (profileData instanceof FormData) {
+      return apiClient.upload('/user/update-my-profile', profileData);
+    } else {
+      // Send as regular JSON
+      return apiClient.patch('/user/update-my-profile', profileData);
+    }
+  },
+
+  changeProfileStatus: async (userId: string, statusData: { status: string }) => {
+    return apiClient.patch(`/user/${userId}/status`, statusData);
   },
 
   createCustomer: async (userData: { name: string; email: string; password: string }) => {
@@ -484,6 +512,10 @@ const api = {
   getVendorProfile: async (): Promise<VendorProfile> => {
     const data = await apiClient.get<ApiResponse<VendorProfile>>('/vendor/profile');
     return data.data;
+  },
+
+  getVendorCard: async () => {
+    return apiClient.get('/vendor/card');
   },
 
   updateVendorProfile: async (formData: FormData) => {

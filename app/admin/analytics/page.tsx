@@ -157,7 +157,7 @@ export default function AdminAnalyticsPage() {
                       <Package className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-800">অর্ডার #{order.id.slice(-8)}</p>
+                      <p className="font-medium text-gray-800">অর্ডার #{order.id.toString().slice(-8)}</p>
                       <p className="text-sm text-gray-600">
                         {order.user?.name} • {new Date(order.createdAt).toLocaleDateString('bn-BD')}
                       </p>

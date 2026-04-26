@@ -1,6 +1,7 @@
 // Reusable UI Components for Scalable Design
 
 import React from 'react';
+import { StatusBadge } from '../StatusBadge';
 
 // Button Component
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -319,3 +320,6 @@ export const ErrorPage: React.FC<ErrorPageProps> = ({
     </div>
   );
 };
+
+// Export StatusBadge component
+export { StatusBadge };

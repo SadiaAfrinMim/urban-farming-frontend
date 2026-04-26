@@ -94,7 +94,7 @@ export default function OrdersPage() {
               <div key={order.id} className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 border border-gray-100">
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h3 className="font-bold text-2xl text-gray-800 mb-2">অর্ডার #{order.id.slice(0, 8)}</h3>
+                    <h3 className="font-bold text-2xl text-gray-800 mb-2">অর্ডার #{order.id.toString().slice(0, 8)}</h3>
                     <p className="text-gray-500 text-sm flex items-center gap-1">
                       📅 {new Date(order.createdAt).toLocaleDateString('bn-BD')}
                     </p>
