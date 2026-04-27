@@ -271,6 +271,8 @@ export const useUpdateUserStatus = () => {
       api.updateUserStatus(userId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-data'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('User status updated successfully!');
     },
     onError: (error: ApiError) => {
@@ -312,11 +314,57 @@ export const useUpdateUserRole = () => {
       api.updateUserRole(userId, role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users });
+      queryClient.invalidateQueries({ queryKey: ['admin-users-data'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard-stats'] });
       toast.success('User role updated successfully!');
     },
     onError: (error: ApiError) => {
       toast.error(error.message || 'Failed to update user role');
     },
+  });
+};
+
+export const useAllUsersData = (filters?: any) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
+  return useQuery({
+    queryKey: ['admin-users-data', filters],
+    queryFn: () => api.getAllUsersData(filters),
+    enabled: !!isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useDashboardStats = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
+  return useQuery({
+    queryKey: ['admin-dashboard-stats'],
+    queryFn: () => api.getDashboardStats(),
+    enabled: !!isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useAllVendorsData = (filters?: any) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
+  return useQuery({
+    queryKey: ['admin-vendors-data', filters],
+    queryFn: () => api.getAllVendorsData(filters),
+    enabled: !!isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useAllCustomersData = (filters?: any) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
+  return useQuery({
+    queryKey: ['admin-customers-data', filters],
+    queryFn: () => api.getAllCustomersData(filters),
+    enabled: !!isAdmin,
+    staleTime: 5 * 60 * 1000,
   });
 };
 

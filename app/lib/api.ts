@@ -175,13 +175,8 @@ const apiClient = {
       ...options.headers,
     };
 
-    // Add Authorization header if token is available in localStorage
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    // Cookies are also sent automatically by the browser
+    // Note: Tokens are sent via httpOnly cookies automatically by the browser
+    // No need to manually add Authorization header
 
     // Log API call details
     const startTime = Date.now();
@@ -194,6 +189,7 @@ const apiClient = {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers,
+        credentials: 'include',
         ...options,
       });
 
@@ -315,6 +311,7 @@ const apiClient = {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers,
+        credentials: 'include',
         body: formData,
       });
 
@@ -375,7 +372,7 @@ const api = {
 
   // Rental Spaces (corrected endpoint)
   getRentalSpaces: async (): Promise<RentalSpace[]> => {
-    const data = await apiClient.get<ApiResponse<RentalSpace[]>>('/rentals');
+    const data = await apiClient.get<ApiResponse<RentalSpace[]>>('/spaces');
     return Array.isArray(data.data) ? data.data : [];
   },
 
@@ -594,6 +591,30 @@ const api = {
     return apiClient.patch(`/admin/users/${userId}/role`, { role });
   },
 
+  getAllUsersData: async (filters?: any) => {
+    const queryString = filters ? new URLSearchParams(filters).toString() : '';
+    const url = queryString ? `/admin/users/all?${queryString}` : '/admin/users/all';
+    return apiClient.get<ApiResponse<any>>(url);
+  },
+
+  getAllVendorsData: async (filters?: any) => {
+    const queryString = filters ? new URLSearchParams(filters).toString() : '';
+    const url = queryString ? `/admin/vendors/all?${queryString}` : '/admin/vendors/all';
+    return apiClient.get<ApiResponse<any>>(url);
+  },
+
+  getAllCustomersData: async (filters?: any) => {
+    const queryString = filters ? new URLSearchParams(filters).toString() : '';
+    const url = queryString ? `/admin/customers/all?${queryString}` : '/admin/customers/all';
+    return apiClient.get<ApiResponse<any>>(url);
+  },
+
+  // Dashboard
+  getDashboardStats: async () => {
+    const data = await apiClient.get<ApiResponse<any>>('/admin/dashboard/stats');
+    return data.data;
+  },
+
   // Certification Management
   getPendingCertifications: async () => {
     const data = await apiClient.get<ApiResponse<any[]>>('/admin/certifications/pending');
@@ -757,6 +778,11 @@ const api = {
 
   updatePlantStatus: async (updateData: { rentalSpaceId: string; plantStatus?: string; lastWatered?: string }) => {
     return apiClient.patch('/vendor/plant-update', updateData);
+  },
+
+  updateOrderStatus: async (orderId: number, status: string): Promise<Order> => {
+    const data = await apiClient.patch<ApiResponse<Order>>(`/vendor/orders/${orderId}/status`, { status });
+    return data.data;
   },
 
   getVendorOrders: async (): Promise<Order[]> => {

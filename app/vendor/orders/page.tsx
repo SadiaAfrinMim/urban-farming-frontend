@@ -5,26 +5,31 @@ import { StatusBadge } from '../../components/StatusBadge';
 import api from '../../lib/api';
 
 interface Order {
-  id: string;
+  id: number;
+  userId: number;
+  produceId: number;
+  vendorId: number;
+  quantity: number;
+  totalPrice: number;
+  status: string;
+  orderDate: string;
+  createdAt: string;
+  produce: {
+    id: number;
+    name: string;
+    price: number;
+  };
   user: {
+    id: number;
     name: string;
     email: string;
   };
-  items: Array<{
-    name: string;
-    quantity: number;
-    price: number;
-    image?: string;
-  }>;
-  totalAmount: number;
-  status: string;
-  createdAt: string;
-  produce?: {
-    id: string;
-    name: string;
-    image?: string;
-    price: number;
-    category: string;
+  vendor?: {
+    id: number;
+    user: {
+      name: string;
+      email: string;
+    };
   };
 }
 
@@ -113,7 +118,7 @@ export default function OrderManagement() {
               </div>
               <div className="text-right">
                 <StatusBadge status={order.status} />
-                <p className="text-lg font-bold mt-2">${order.totalAmount.toFixed(2)}</p>
+                <p className="text-lg font-bold mt-2">${order.totalPrice?.toFixed(2) || '0.00'}</p>
               </div>
             </div>
 

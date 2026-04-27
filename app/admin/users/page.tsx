@@ -2,21 +2,36 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useUsers, useUpdateUserStatus } from '@/app/hooks/useApi';
+import { useAllUsersData, useUpdateUserStatus } from '@/app/hooks/useApi';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { LoadingPage, ErrorPage, Card, Alert, Button } from '@/app/components/ui';
 
 export default function AdminUsersPage() {
   const { hasRole } = useAuth();
-  const [filter, setFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<string>('desc');
+
+  const filters = {
+    ...(searchTerm && { searchTerm }),
+    ...(roleFilter !== 'all' && { role: roleFilter }),
+    ...(statusFilter !== 'all' && { status: statusFilter }),
+    sortBy,
+    sortOrder,
+    limit: 50, // Show more users on this page
+  };
+
+  const { data: usersData, isLoading, error, refetch } = useAllUsersData(filters);
+  const updateUserStatusMutation = useUpdateUserStatus();
 
   // Redirect if not admin
   if (!hasRole('Admin')) {
     return <ErrorPage title="Access Denied" message="You don't have permission to access this page." />;
   }
 
-  const { data: users = [], isLoading, error, refetch } = useUsers();
-  const updateUserStatusMutation = useUpdateUserStatus();
+  const users = usersData?.data || [];
 
   const handleStatusUpdate = async (userId: string, status: string) => {
     try {
@@ -25,11 +40,6 @@ export default function AdminUsersPage() {
       // Error handled by mutation
     }
   };
-
-  const filteredUsers = users.filter(user => {
-    if (filter === 'all') return true;
-    return user.role.toLowerCase() === filter;
-  });
 
   if (isLoading) {
     return <LoadingPage message="ইউজার লিস্ট লোড হচ্ছে..." />;
@@ -45,18 +55,27 @@ export default function AdminUsersPage() {
     );
   }
 
-  const filterOptions = [
-    { value: 'all', label: 'সব ইউজার' },
-    { value: 'admin', label: 'এডমিন' },
-    { value: 'vendor', label: 'ভেন্ডর' },
-    { value: 'customer', label: 'কাস্টমার' },
+  const roleOptions = [
+    { value: 'all', label: 'সব রোল' },
+    { value: 'Admin', label: 'এডমিন' },
+    { value: 'Vendor', label: 'ভেন্ডর' },
+    { value: 'Customer', label: 'কাস্টমার' },
   ];
 
   const statusOptions = [
+    { value: 'all', label: 'সব স্ট্যাটাস' },
     { value: 'Active', label: 'সক্রিয়' },
     { value: 'Pending', label: 'পেন্ডিং' },
     { value: 'Suspended', label: 'নিষ্ক্রিয়' },
   ];
+
+  const sortOptions = [
+    { value: 'createdAt', label: 'রেজিস্ট্রেশন তারিখ' },
+    { value: 'name', label: 'নাম' },
+    { value: 'email', label: 'ইমেইল' },
+  ];
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -70,24 +89,89 @@ export default function AdminUsersPage() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">ইউজার ম্যানেজমেন্ট</h1>
 
-          <div className="flex gap-4 items-center">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {filterOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-
+          <div className="flex gap-2 items-center">
             <Button onClick={() => refetch()} variant="outline" size="sm">
               রিফ্রেশ
             </Button>
           </div>
         </div>
+
+        {/* Filters and Search */}
+        <Card shadow="md" className="p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">খোঁজ করুন</label>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="নাম বা ইমেইল দিয়ে খোঁজ করুন..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">রোল ফিল্টার</label>
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {roleOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">স্ট্যাটাস ফিল্টার</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {statusOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">সর্ট করুন</label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {sortOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">ক্রম</label>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="desc">নতুন প্রথম</option>
+                <option value="asc">পুরাতন প্রথম</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-4 text-sm text-gray-600">
+            মোট {usersData?.meta?.total || 0} ইউজার • দেখাচ্ছে {users.length} ইউজার
+          </div>
+        </Card>
 
         {updateUserStatusMutation.isError && (
           <Alert
@@ -102,19 +186,32 @@ export default function AdminUsersPage() {
             <table className="w-full table-auto">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="px-6 py-4 text-left font-semibold text-gray-800">নাম</th>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-800">ইমেইল</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-800">ইউজার</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-800">রোল</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-800">স্ট্যাটাস</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-800">বিস্তারিত তথ্য</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-800">রেজিস্ট্রেশন তারিখ</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-800">অ্যাকশন</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((user) => (
+                {users.map((user) => (
                   <tr key={user.id} className="border-t hover:bg-gray-50">
-                    <td className="px-6 py-4">{user.name}</td>
-                    <td className="px-6 py-4">{user.email}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                          {user.profileImage ? (
+                            <img src={user.profileImage} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
+                          ) : (
+                            <span className="text-gray-600 font-medium">{user.name.charAt(0)}</span>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-800">{user.name}</p>
+                          <p className="text-sm text-gray-600">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded text-sm font-medium ${
                         user.role === 'Admin' ? 'bg-red-100 text-red-800' :
@@ -134,6 +231,32 @@ export default function AdminUsersPage() {
                         {user.status === 'Active' ? 'সক্রিয়' :
                          user.status === 'Pending' ? 'পেন্ডিং' : 'নিষ্ক্রিয়'}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {user.role === 'Vendor' && user.vendorProfile ? (
+                        <div className="text-sm">
+                          <p className="font-medium text-gray-800">{user.vendorProfile.farmName}</p>
+                          <p className="text-gray-600">{user.vendorProfile.farmLocation}</p>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            user.vendorProfile.certificationStatus === 'Approved' ? 'bg-green-100 text-green-800' :
+                            user.vendorProfile.certificationStatus === 'Rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {user.vendorProfile.certificationStatus === 'Approved' ? 'অনুমোদিত' :
+                             user.vendorProfile.certificationStatus === 'Rejected' ? 'প্রত্যাখ্যাত' : 'পেন্ডিং'}
+                          </span>
+                        </div>
+                      ) : user.role === 'Customer' ? (
+                        <div className="text-sm text-gray-600">
+                          <p>কাস্টমার অ্যাকাউন্ট</p>
+                          <p>সক্রিয় অংশগ্রহণকারী</p>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-600">
+                          <p>এডমিন অ্যাকাউন্ট</p>
+                          <p>সিস্টেম অ্যাক্সেস</p>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       {user.createdAt ? new Date(user.createdAt).toLocaleDateString('bn-BD') : 'N/A'}
@@ -158,7 +281,7 @@ export default function AdminUsersPage() {
             </table>
           </div>
 
-          {filteredUsers.length === 0 && (
+          {users.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               কোনো ইউজার পাওয়া যায়নি
             </div>

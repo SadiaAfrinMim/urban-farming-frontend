@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useDashboardStats, useAllUsersData, useUpdateUserStatus, useUpdateUserRole } from '@/app/hooks/useApi';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 interface User {
-  id: number;
+  id: string | number;
   name: string;
   email: string;
   role: string;
   status: string;
+  createdAt?: string;
 }
 
 interface Stats {
@@ -21,75 +24,76 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [stats, setStats] = useState<Stats>({
+  const { hasRole } = useAuth();
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<string>('desc');
+
+  const filters = {
+    ...(searchTerm && { searchTerm }),
+    ...(roleFilter !== 'all' && { role: roleFilter }),
+    ...(statusFilter !== 'all' && { status: statusFilter }),
+    sortBy,
+    sortOrder,
+    limit: 10, // Show fewer users on dashboard
+  };
+
+  const { data: statsData, isLoading: statsLoading, error: statsError } = useDashboardStats();
+  const { data: usersData, isLoading: usersLoading, error: usersError } = useAllUsersData(filters);
+  const updateUserStatusMutation = useUpdateUserStatus();
+  const updateUserRoleMutation = useUpdateUserRole();
+
+  // Handle different response structures safely
+  let users = [];
+  if (Array.isArray(usersData?.data?.data)) {
+    users = usersData.data.data;
+  } else if (Array.isArray(usersData?.data)) {
+    users = usersData.data;
+  } else if (Array.isArray(usersData?.data?.data?.data)) {
+    users = usersData.data.data.data;
+  } else {
+    users = [];
+  }
+  const stats = statsData || {
     totalUsers: 0,
     totalVendors: 0,
     totalCustomers: 0,
     pendingCertifications: 0,
     pendingProducts: 0,
     pendingPosts: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Redirect if not admin
+  if (!hasRole('Admin')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Access Denied</h1>
+          <p className="text-gray-600">You don't have permission to access this page.</p>
+        </div>
+      </div>
+    );
+  }
 
-  const fetchData = async () => {
+  const handleStatusUpdate = async (userId: string, status: string) => {
     try {
-      setLoading(true);
-
-      // Fetch dashboard stats
-      const statsRes = await fetch('http://localhost:5000/api/v1/admin/dashboard/stats', {
-        credentials: 'include'
-      });
-
-      // Fetch users for the table
-      const usersRes = await fetch('http://localhost:5000/api/v1/admin/users?limit=100', {
-        credentials: 'include'
-      });
-
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData.data);
-      }
-
-      if (usersRes.ok) {
-        const usersResponse = await usersRes.json();
-        const userList = usersResponse.data || [];
-        setUsers(userList);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'ডেটা লোড করা যাচ্ছে না');
-    } finally {
-      setLoading(false);
+      await updateUserStatusMutation.mutateAsync({ userId, status });
+    } catch (error) {
+      // Error handled by mutation
     }
   };
 
-  const updateUserStatus = async (userId: number, status: string) => {
+  const handleRoleUpdate = async (userId: string, role: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/v1/admin/users/${userId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // Include cookies for authentication
-        body: JSON.stringify({ status })
-      });
-
-      if (res.ok) {
-        fetchData(); // Refresh data
-      } else {
-        setError('স্ট্যাটাস আপডেট করা যাচ্ছে না');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      await updateUserRoleMutation.mutateAsync({ userId, role });
+    } catch (error) {
+      // Error handled by mutation
     }
   };
 
-  if (loading) {
+  if (statsLoading || usersLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-xl text-gray-600">লোড হচ্ছে...</div>
@@ -106,9 +110,21 @@ export default function AdminDashboard() {
 
         <h1 className="text-3xl font-bold text-center mb-10 text-gray-800">এডমিন ড্যাশবোর্ড</h1>
 
-        {error && (
+        {(statsError || usersError) && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
+            {statsError?.message || usersError?.message || 'ডেটা লোড করা যাচ্ছে না'}
+          </div>
+        )}
+
+        {updateUserStatusMutation.isError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+            স্ট্যাটাস আপডেট করা যাচ্ছে না
+          </div>
+        )}
+
+        {updateUserRoleMutation.isError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+            রোল আপডেট করা যাচ্ছে না
           </div>
         )}
 
@@ -237,11 +253,13 @@ export default function AdminDashboard() {
                   <th className="px-6 py-4 text-left font-semibold text-gray-800">ইমেইল</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-800">রোল</th>
                   <th className="px-6 py-4 text-left font-semibold text-gray-800">স্ট্যাটাস</th>
-                  <th className="px-6 py-4 text-left font-semibold text-gray-800">অ্যাকশন</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-800">রেজিস্ট্রেশন তারিখ</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-800">রোল পরিবর্তন</th>
+                  <th className="px-6 py-4 text-left font-semibold text-gray-800">স্ট্যাটাস পরিবর্তন</th>
                 </tr>
               </thead>
               <tbody>
-                {users.slice(0, 5).map((user) => (
+                {(users || []).slice(0, 5).map((user) => (
                   <tr key={user.id} className="border-t hover:bg-gray-50">
                     <td className="px-6 py-4">{user.name}</td>
                     <td className="px-6 py-4">{user.email}</td>
@@ -266,10 +284,26 @@ export default function AdminDashboard() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
+                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString('bn-BD') : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4">
                       <select
-                        value={user.status}
-                        onChange={(e) => updateUserStatus(user.id, e.target.value)}
-                        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={user.role || 'Customer'}
+                        onChange={(e) => handleRoleUpdate(user.id.toString(), e.target.value)}
+                        disabled={updateUserRoleMutation.isPending}
+                        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      >
+                        <option value="Customer">কাস্টমার</option>
+                        <option value="Vendor">ভেন্ডর</option>
+                        <option value="Admin">এডমিন</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4">
+                      <select
+                        value={user.status || 'Active'}
+                        onChange={(e) => handleStatusUpdate(user.id.toString(), e.target.value)}
+                        disabled={updateUserStatusMutation.isPending}
+                        className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                       >
                         <option value="Active">সক্রিয়</option>
                         <option value="Pending">পেন্ডিং</option>

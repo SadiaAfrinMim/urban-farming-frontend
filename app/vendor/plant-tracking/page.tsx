@@ -127,7 +127,7 @@ export default function PlantTracking() {
                 <option value="Sprouting">Sprouting</option>
                 <option value="Growing">Growing</option>
                 <option value="Flowering">Flowering</option>
-                <option value="Ready to Harvest">Ready to Harvest</option>
+                <option value="ReadyToHarvest">Ready to Harvest</option>
                 <option value="Harvested">Harvested</option>
               </select>
             </div>
