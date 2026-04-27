@@ -186,7 +186,14 @@ export default function PlantTracking() {
               <div className="text-right">
                 <p className="font-medium">{space.plantStatus}</p>
                 <p className="text-sm text-gray-600">
-                  Last watered: {space.lastWatered ? new Date(space.lastWatered).toLocaleDateString() : 'N/A'}
+                  Last watered: {space.lastWatered ? (() => {
+                    try {
+                      const date = new Date(space.lastWatered);
+                      return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                    } catch (error) {
+                      return 'Invalid Date';
+                    }
+                  })() : 'N/A'}
                 </p>
               </div>
             </div>

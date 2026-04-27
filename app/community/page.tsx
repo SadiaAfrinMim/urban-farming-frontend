@@ -249,7 +249,14 @@ export default function CommunityPage() {
                       <div>
                         <h4 className="font-semibold text-gray-900">{post.user?.name || 'ব্যবহারকারী'}</h4>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <span>{new Date(post.postDate || post.createdAt).toLocaleDateString()}</span>
+                          <span>{(() => {
+                            try {
+                              const date = new Date(post.postDate || post.createdAt);
+                              return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                            } catch (error) {
+                              return 'Invalid Date';
+                            }
+                          })()}</span>
                         </div>
                       </div>
                     </div>
@@ -307,7 +314,14 @@ export default function CommunityPage() {
                                      {comment.user?.name || 'ব্যবহারকারী'}
                                    </span>
                                    <span className="text-xs text-gray-500">
-                                     {new Date(comment.createdAt).toLocaleDateString()}
+                                     {(() => {
+                                       try {
+                                         const date = new Date(comment.createdAt);
+                                         return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                                       } catch (error) {
+                                         return 'Invalid Date';
+                                       }
+                                     })()}
                                    </span>
                                  </div>
                                  <Button

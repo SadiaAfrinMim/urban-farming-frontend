@@ -80,7 +80,9 @@ export default function CartPage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-2xl text-gray-800 mb-2">{item.name}</h3>
-                  <p className="text-xl text-green-600 font-semibold">৳ {item.price} প্রতি ইউনিট</p>
+                  <p className="text-xl text-green-600 font-semibold">
+                    ৳ {item.price} {item.unit ? `প্রতি ${item.unit}` : 'প্রতি ইউনিট'}
+                  </p>
                 </div>
                 <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-2">
                   <button

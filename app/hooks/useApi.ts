@@ -346,6 +346,47 @@ export const useDashboardStats = () => {
   });
 };
 
+// Home Page APIs
+export const useFeaturedProducts = () => {
+  return useQuery({
+    queryKey: ['home-featured-products'],
+    queryFn: () => api.getFeaturedProducts(),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useCategories = () => {
+  return useQuery({
+    queryKey: ['home-categories'],
+    queryFn: () => api.getCategories(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+export const useStatistics = () => {
+  return useQuery({
+    queryKey: ['home-statistics'],
+    queryFn: () => api.getStatistics(),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useTestimonials = () => {
+  return useQuery({
+    queryKey: ['home-testimonials'],
+    queryFn: () => api.getTestimonials(),
+    staleTime: 30 * 60 * 1000, // 30 minutes
+  });
+};
+
+export const useFeaturedVendors = () => {
+  return useQuery({
+    queryKey: ['home-featured-vendors'],
+    queryFn: () => api.getFeaturedVendors(),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 export const useAllVendorsData = (filters?: any) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';

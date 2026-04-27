@@ -152,24 +152,52 @@ export default function PlantsPage() {
                  <div className="space-y-2 text-sm text-gray-600">
                  <div className="flex items-center gap-2">
                    <Calendar className="w-4 h-4" />
-                   <span suppressHydrationWarning>Planted: {new Date(plant.plantingDate).toLocaleDateString()}</span>
+                   <span suppressHydrationWarning>Planted: {(() => {
+                     try {
+                       const date = new Date(plant.plantingDate);
+                       return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                     } catch (error) {
+                       return 'Invalid Date';
+                     }
+                   })()}</span>
                  </div>
                  {plant.expectedHarvest && (
                    <div className="flex items-center gap-2">
                      <Clock className="w-4 h-4" />
-                     <span suppressHydrationWarning>Harvest: {new Date(plant.expectedHarvest).toLocaleDateString()}</span>
+                     <span suppressHydrationWarning>Harvest: {(() => {
+                       try {
+                         const date = new Date(plant.expectedHarvest);
+                         return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                       } catch (error) {
+                         return 'Invalid Date';
+                       }
+                     })()}</span>
                    </div>
                  )}
                  {plant.lastWatered && (
                    <div className="flex items-center gap-2">
                      <Droplets className="w-4 h-4 text-blue-500" />
-                     <span suppressHydrationWarning>Last watered: {new Date(plant.lastWatered).toLocaleDateString()}</span>
+                     <span suppressHydrationWarning>Last watered: {(() => {
+                       try {
+                         const date = new Date(plant.lastWatered);
+                         return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                       } catch (error) {
+                         return 'Invalid Date';
+                       }
+                     })()}</span>
                    </div>
                  )}
                  {plant.lastFertilized && (
                    <div className="flex items-center gap-2">
                      <Leaf className="w-4 h-4 text-green-500" />
-                     <span suppressHydrationWarning>Last fertilized: {new Date(plant.lastFertilized).toLocaleDateString()}</span>
+                     <span suppressHydrationWarning>Last fertilized: {(() => {
+                       try {
+                         const date = new Date(plant.lastFertilized);
+                         return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                       } catch (error) {
+                         return 'Invalid Date';
+                       }
+                     })()}</span>
                    </div>
                  )}
                </div>

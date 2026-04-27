@@ -69,6 +69,12 @@ export default function MarketplacePage() {
       return;
     }
 
+    // Check if user is a vendor
+    if (user.role === 'Vendor') {
+      toast.error('ভেন্ডররা প্রোডাক্ট কিনতে পারবেন না। শুধুমাত্র কাস্টমাররা কিনতে পারবেন।');
+      return;
+    }
+
     try {
       // Create order first
       const product = products.find(p => p.id === productId);
@@ -223,65 +229,65 @@ export default function MarketplacePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
               {products.map((product) => (
-                <div key={product.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
-                  <div className="relative h-56 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center overflow-hidden">
-                  {product.image ? (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        const fallback = e.currentTarget.parentElement?.querySelector('.fallback') as HTMLElement;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div className="fallback flex flex-col items-center gap-2" style={{ display: product.image ? 'none' : 'flex' }}>
-                    <span className="text-4xl">🥕</span>
-                    <span className="text-gray-500 font-medium">ছবি নেই</span>
-                  </div>
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-green-700">
-                      {product.category || 'পণ্য'}
+                <Link key={product.id} href={`/products/${product.id}`}>
+                  <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 cursor-pointer">
+                    <div className="relative h-56 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center overflow-hidden">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.parentElement?.querySelector('.fallback') as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div className="fallback flex flex-col items-center gap-2" style={{ display: product.image ? 'none' : 'flex' }}>
+                      <span className="text-4xl">🥕</span>
+                      <span className="text-gray-500 font-medium">ছবি নেই</span>
                     </div>
-                    <div className="absolute top-3 right-3 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                      {product.certificationStatus === 'Approved' ? '✅ অনুমোদিত' : '⏳ অপেক্ষমান'}
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="font-bold text-xl text-gray-800 mb-3 line-clamp-1">{product.name}</h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
-                      {product.description || 'কোনো বিবরণ নেই'}
-                    </p>
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex flex-col">
-                        <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                          ৳ {product.price}
-                        </span>
-                        <span className="text-xs text-gray-500">প্রতি ইউনিট</span>
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-green-700">
+                        {product.category || 'পণ্য'}
                       </div>
-                      <div className="text-right">
-                        <span className="text-sm text-gray-500">স্টক:</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          product.availableQuantity < 10
-                            ? 'bg-red-100 text-red-800'
-                            : product.availableQuantity < 50
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {product.availableQuantity}
-                        </span>
+                      <div className="absolute top-3 right-3 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                        {product.certificationStatus === 'Approved' ? '✅ অনুমোদিত' : '⏳ অপেক্ষমান'}
                       </div>
                     </div>
-                      <button
-                      onClick={() => handleBuyProduct(product.id)}
-                      disabled={product.certificationStatus !== 'Approved'}
-                      className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white text-sm font-medium rounded-xl hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                    >
-                      {isAuthenticated ? '🛒 কিনুন' : '🔐 লগইন করে কিনুন'}
-                    </button>
+                    <div className="p-6">
+                      <h3 className="font-bold text-xl text-gray-800 mb-3 line-clamp-1">{product.name}</h3>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+                        {product.description || 'কোনো বিবরণ নেই'}
+                      </p>
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex flex-col">
+                          <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                            ৳ {product.price}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {product.unit ? `প্রতি ${product.unit}` : 'প্রতি ইউনিট'}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm text-gray-500">স্টক:</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            product.availableQuantity < 10
+                              ? 'bg-red-100 text-red-800'
+                              : product.availableQuantity < 50
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {product.availableQuantity}
+                          </span>
+                        </div>
+                      </div>
+                        <div className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white text-sm font-medium rounded-xl text-center shadow-md">
+                          বিস্তারিত দেখুন
+                        </div>
+                    </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </>

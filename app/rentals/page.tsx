@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api, { RentalSpace } from '../lib/api';
+import toast from 'react-hot-toast';
 
 export default function RentalsPage() {
   const [spaces, setSpaces] = useState<RentalSpace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [bookingLoading, setBookingLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSpaces();
@@ -44,6 +46,24 @@ export default function RentalsPage() {
       setError(err instanceof Error ? err.message : 'সার্চ করা যাচ্ছে না');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBookSpace = async (space: RentalSpace) => {
+    if (!confirm('আপনি কি এই রেন্টাল স্পেস বুক করতে চান?')) {
+      return;
+    }
+
+    try {
+      setBookingLoading(space.id.toString());
+      await api.bookRentalSpace(space.id.toString());
+      toast.success('রেন্টাল স্পেস সফলভাবে বুক করা হয়েছে!');
+      fetchSpaces(); // Refresh to update availability
+    } catch (err: any) {
+      console.error('Failed to book rental space:', err);
+      toast.error(err?.response?.data?.message || 'বুক করা যায়নি। আবার চেষ্টা করুন।');
+    } finally {
+      setBookingLoading(null);
     }
   };
 
@@ -127,13 +147,17 @@ export default function RentalsPage() {
                     </span>
                     <span className="text-xs text-gray-500">প্রতি মাস</span>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${space.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {space.available ? '✅ অভ্যন্তরীণ' : '❌ ব্যবহৃত'}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${space.availability ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {space.availability ? '✅ অভ্যন্তরীণ' : '❌ ব্যবহৃত'}
                   </span>
                 </div>
-                {space.available && (
-                  <button className="w-full py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-md hover:shadow-lg font-medium">
-                    📅 বুক করুন
+                {space.availability && (
+                  <button
+                    onClick={() => handleBookSpace(space)}
+                    disabled={bookingLoading === space.id.toString()}
+                    className="w-full py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {bookingLoading === space.id.toString() ? 'বুক হচ্ছে...' : '📅 বুক করুন'}
                   </button>
                 )}
               </div>

@@ -234,7 +234,14 @@ export default function CustomerDashboardPage() {
                       }`}>
                         {post.category}
                       </span>
-                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                      <span>{(() => {
+                        try {
+                          const date = new Date(post.createdAt);
+                          return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                        } catch (error) {
+                          return 'Invalid Date';
+                        }
+                      })()}</span>
                     </div>
                   </div>
                 ))}
@@ -287,7 +294,14 @@ export default function CustomerDashboardPage() {
                   <div key={comment.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
                       <span className="font-medium text-gray-900">{comment.author}</span>
-                      <span className="text-sm text-gray-500">{new Date(comment.createdAt).toLocaleDateString()}</span>
+                      <span className="text-sm text-gray-500">{(() => {
+                        try {
+                          const date = new Date(comment.createdAt);
+                          return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                        } catch (error) {
+                          return 'Invalid Date';
+                        }
+                      })()}</span>
                     </div>
                     <p className="text-gray-700">{comment.text}</p>
                   </div>

@@ -146,7 +146,14 @@ export default function AdminCustomersPage() {
                   <h3 className="font-semibold text-gray-800">{customer.name}</h3>
                   <p className="text-sm text-gray-600">{customer.email}</p>
                   <p className="text-xs text-gray-500">
-                    রেজিস্ট্রেশন: {new Date(customer.createdAt).toLocaleDateString('bn-BD')}
+                    রেজিস্ট্রেশন: {(() => {
+                      try {
+                        const date = new Date(customer.createdAt);
+                        return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                      } catch (error) {
+                        return 'Invalid Date';
+                      }
+                    })()}
                   </p>
                 </div>
               </div>

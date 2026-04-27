@@ -6,6 +6,7 @@ import { Card, Button, Input, Alert, LoadingSpinner, StatusBadge } from '../../c
 import api from '../../lib/api';
 import toast from 'react-hot-toast';
 import { useUpdateRentalSpace, useDeleteRentalSpace } from '../../hooks/useApi';
+import Image from 'next/image';
 
 interface RentalSpace {
   id: string;
@@ -432,10 +433,12 @@ export default function RentalSpaceManagement() {
             <Card key={space.id} className="hover:shadow-lg transition-shadow">
               {space.image && (
                 <div className="w-full h-48 bg-gray-200 rounded-t-lg overflow-hidden">
-                  <img
+                  <Image
                     src={space.image}
                     alt={space.location}
                     className="w-full h-full object-cover"
+                    width={500}
+                    height={300}
                   />
                 </div>
               )}
@@ -475,7 +478,14 @@ export default function RentalSpaceManagement() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Last Watered:</span>
                       <span className="font-medium">
-                        {new Date(space.lastWatered).toLocaleDateString()}
+                        {(() => {
+                          try {
+                            const date = new Date(space.lastWatered);
+                            return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                          } catch (error) {
+                            return 'Invalid Date';
+                          }
+                        })()}
                       </span>
                     </div>
                   )}

@@ -259,7 +259,14 @@ export default function AdminUsersPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString('bn-BD') : 'N/A'}
+                      {user.createdAt ? (() => {
+                        try {
+                          const date = new Date(user.createdAt);
+                          return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                        } catch (error) {
+                          return 'Invalid Date';
+                        }
+                      })() : 'N/A'}
                     </td>
                     <td className="px-6 py-4">
                       <select

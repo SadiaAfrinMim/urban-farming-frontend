@@ -111,6 +111,15 @@ export default function VendorCommunityPage() {
     }));
   };
 
+  // Real-time polling for updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 10000); // Poll every 10 seconds for real-time updates
+
+    return () => clearInterval(interval);
+  }, [refetch]);
+
 
 
   if (isLoading) {
@@ -280,7 +289,14 @@ export default function VendorCommunityPage() {
                       <div>
                         <h4 className="font-semibold text-gray-900">{post.user?.name || 'Anonymous'}</h4>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <span>{new Date(post.postDate || post.createdAt).toLocaleDateString()}</span>
+                          <span>{(() => {
+                            try {
+                              const date = new Date(post.postDate || post.createdAt);
+                              return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                            } catch (error) {
+                              return 'Invalid Date';
+                            }
+                          })()}</span>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${postInfo.color}`}>
                             {postInfo.label}
                           </span>
@@ -341,7 +357,14 @@ export default function VendorCommunityPage() {
                                     {comment.user?.name || 'Anonymous'}
                                   </span>
                                   <span className="text-xs text-gray-500">
-                                    {new Date(comment.createdAt).toLocaleDateString()}
+                                    {(() => {
+                                      try {
+                                        const date = new Date(comment.createdAt);
+                                        return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                                      } catch (error) {
+                                        return 'Invalid Date';
+                                      }
+                                    })()}
                                   </span>
                                 </div>
                                 <Button
@@ -406,7 +429,10 @@ export default function VendorCommunityPage() {
             </Button>
 
             <Button
-              onClick={() => setPostType('question')}
+              onClick={() => {
+                setPostType('question');
+                setShowCreateForm(true);
+              }}
               variant="outline"
               className="border-blue-300 text-blue-700 hover:bg-blue-50"
             >
@@ -414,7 +440,10 @@ export default function VendorCommunityPage() {
             </Button>
 
             <Button
-              onClick={() => setPostType('experience')}
+              onClick={() => {
+                setPostType('experience');
+                setShowCreateForm(true);
+              }}
               variant="outline"
               className="border-purple-300 text-purple-700 hover:bg-purple-50"
             >

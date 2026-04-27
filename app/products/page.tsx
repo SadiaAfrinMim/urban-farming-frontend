@@ -77,40 +77,47 @@ export default function ProductsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {products.map((product) => (
-              <div key={product.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
-                <div className="relative h-56 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center overflow-hidden">
-                  {product.image ? (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-4xl">🥕</span>
-                      <span className="text-gray-500 font-medium">ছবি নেই</span>
+              <Link key={product.id} href={`/products/${product.id}`}>
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 cursor-pointer">
+                  <div className="relative h-56 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center overflow-hidden">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <span className="text-4xl">🥕</span>
+                        <span className="text-gray-500 font-medium">ছবি নেই</span>
+                      </div>
+                    )}
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-green-700">
+                      {product.category || 'পণ্য'}
                     </div>
-                  )}
-                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-green-700">
-                    {product.category || 'পণ্য'}
+                    <div className="absolute top-3 right-3 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                      {product.certificationStatus === 'Approved' ? '✅ অনুমোদিত' : '⏳ অপেক্ষমান'}
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="font-bold text-xl text-gray-800 mb-3 line-clamp-1">{product.name}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">{product.description}</p>
+                    <div className="flex justify-between items-center">
+                      <div className="flex flex-col">
+                        <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                          ৳ {product.price}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {product.unit ? `প্রতি ${product.unit}` : 'প্রতি ইউনিট'}
+                        </span>
+                      </div>
+                      <div className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white text-sm font-medium rounded-xl text-center shadow-md">
+                        বিস্তারিত দেখুন
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="p-6">
-                  <h3 className="font-bold text-xl text-gray-800 mb-3 line-clamp-1">{product.name}</h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">{product.description}</p>
-                  <div className="flex justify-between items-center">
-                    <div className="flex flex-col">
-                      <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                        ৳ {product.price}
-                      </span>
-                      <span className="text-xs text-gray-500">প্রতি ইউনিট</span>
-                    </div>
-                    <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white text-sm font-medium rounded-xl hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105">
-                      🛒 কিনুন
-                    </button>
-                  </div>
-                </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

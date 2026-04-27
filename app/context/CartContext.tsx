@@ -9,6 +9,7 @@ interface CartItem {
   price: number;
   quantity: number;
   image?: string;
+  unit?: string;
 }
 
 interface CartContextType {
@@ -59,7 +60,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         name: product.name,
         price: product.price,
         quantity: 1,
-        image: product.image
+        image: product.image,
+        unit: product.unit
       }];
     });
   };

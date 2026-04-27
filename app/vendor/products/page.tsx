@@ -32,6 +32,7 @@ export default function ProductManagement() {
     price: 0,
     category: '',
     availableQuantity: 0,
+    unit: 'kg',
     image: null as File | null,
   });
 
@@ -53,6 +54,7 @@ export default function ProductManagement() {
           price: formData.price,
           category: formData.category,
           availableQuantity: formData.availableQuantity,
+          unit: formData.unit,
           certificationStatus: editingProduct.certificationStatus, // Keep existing status
         }
       });
@@ -63,6 +65,7 @@ export default function ProductManagement() {
         price: formData.price,
         category: formData.category,
         availableQuantity: formData.availableQuantity,
+        unit: formData.unit,
         certificationStatus: 'Pending',
         image: formData.image || undefined,
       });
@@ -80,6 +83,7 @@ export default function ProductManagement() {
       price: 0,
       category: '',
       availableQuantity: 0,
+      unit: 'kg',
       image: null,
     });
   };
@@ -98,6 +102,7 @@ export default function ProductManagement() {
       price: productToEdit.price,
       category: productToEdit.category,
       availableQuantity: productToEdit.availableQuantity,
+      unit: productToEdit.unit || 'kg',
       image: null, // Can't pre-fill file input
     });
     setShowAddForm(true);
@@ -225,6 +230,21 @@ export default function ProductManagement() {
                 required
                 placeholder="50"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-2">ইউনিট</label>
+              <select
+                value={formData.unit}
+                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                required
+              >
+                <option value="kg">কেজি</option>
+                <option value="piece">পিস</option>
+                <option value="dozen">ডজন</option>
+                <option value="gram">গ্রাম</option>
+                <option value="liter">লিটার</option>
+              </select>
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-800 mb-2">বর্ণনা</label>

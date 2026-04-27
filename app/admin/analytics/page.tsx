@@ -159,7 +159,14 @@ export default function AdminAnalyticsPage() {
                     <div>
                       <p className="font-medium text-gray-800">অর্ডার #{order.id.toString().slice(-8)}</p>
                       <p className="text-sm text-gray-600">
-                        {order.user?.name} • {new Date(order.createdAt).toLocaleDateString('bn-BD')}
+                        {order.user?.name} • {(() => {
+                          try {
+                            const date = new Date(order.createdAt);
+                            return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                          } catch (error) {
+                            return 'Invalid Date';
+                          }
+                        })()}
                       </p>
                     </div>
                   </div>

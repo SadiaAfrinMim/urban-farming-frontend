@@ -192,7 +192,7 @@ export default function CustomerPostsPage() {
 
       {error && (
         <Alert type="error" className="mb-6">
-          {error}
+          {error instanceof Error ? error.message : 'পোস্ট লোড করতে সমস্যা হয়েছে'}
         </Alert>
       )}
 
@@ -381,7 +381,14 @@ export default function CustomerPostsPage() {
                                     {comment.user?.name || 'Anonymous'}
                                   </span>
                                   <span className="text-xs text-gray-500">
-                                    {new Date(comment.createdAt).toLocaleDateString()}
+                                    {(() => {
+                                      try {
+                                        const date = new Date(comment.createdAt);
+                                        return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                                      } catch (error) {
+                                        return 'Invalid Date';
+                                      }
+                                    })()}
                                   </span>
                                 </div>
                                 <Button

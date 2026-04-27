@@ -21,6 +21,7 @@ export interface Produce {
   category: string;
   availableQuantity: number;
   certificationStatus: string;
+  unit?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -384,6 +385,10 @@ const api = {
   searchRentalSpaces: async (query: string): Promise<RentalSpace[]> => {
     const data = await apiClient.get<ApiResponse<RentalSpace[]>>(`/rentals/search?q=${encodeURIComponent(query)}`);
     return Array.isArray(data.data) ? data.data : [];
+  },
+
+  bookRentalSpace: async (spaceId: string) => {
+    return apiClient.post('/rentals/book', { spaceId });
   },
 
   // Community
@@ -869,6 +874,32 @@ const api = {
 
   deleteComment: async (commentId: string): Promise<void> => {
     await apiClient.delete(`/community/posts/comments/${commentId}`);
+  },
+
+  // Home Page APIs
+  getFeaturedProducts: async () => {
+    const data = await apiClient.get<ApiResponse<Produce[]>>('/home/featured-products');
+    return data.data;
+  },
+
+  getCategories: async () => {
+    const data = await apiClient.get<ApiResponse<any[]>>('/home/categories');
+    return data.data;
+  },
+
+  getStatistics: async () => {
+    const data = await apiClient.get<ApiResponse<any>>('/home/statistics');
+    return data.data;
+  },
+
+  getTestimonials: async () => {
+    const data = await apiClient.get<ApiResponse<any[]>>('/home/testimonials');
+    return data.data;
+  },
+
+  getFeaturedVendors: async () => {
+    const data = await apiClient.get<ApiResponse<any[]>>('/home/featured-vendors');
+    return data.data;
   },
 };
 

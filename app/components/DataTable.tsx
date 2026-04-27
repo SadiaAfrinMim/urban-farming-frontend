@@ -92,7 +92,14 @@ const ProductCard: React.FC<{ item: Produce; onEdit: (id: string) => void; onDel
           </div>
           {item.createdAt && (
             <span className="text-xs text-gray-500">
-              {new Date(item.createdAt).toLocaleDateString('bn-BD')}
+              {(() => {
+                try {
+                  const date = new Date(item.createdAt);
+                  return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                } catch (error) {
+                  return 'Invalid Date';
+                }
+              })()}
             </span>
           )}
         </div>

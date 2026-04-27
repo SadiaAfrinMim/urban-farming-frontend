@@ -96,7 +96,14 @@ export default function OrdersPage() {
                   <div>
                     <h3 className="font-bold text-2xl text-gray-800 mb-2">অর্ডার #{order.id.toString().slice(0, 8)}</h3>
                     <p className="text-gray-500 text-sm flex items-center gap-1">
-                      📅 {new Date(order.createdAt).toLocaleDateString('bn-BD')}
+                      📅 {(() => {
+                        try {
+                          const date = new Date(order.createdAt);
+                          return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
+                        } catch (error) {
+                          return 'Invalid Date';
+                        }
+                      })()}
                     </p>
                   </div>
                   <span className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(order.status)} shadow-sm`}>
