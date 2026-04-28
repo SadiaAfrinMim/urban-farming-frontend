@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { StripeProvider } from './contexts/StripeContext';
+import { CartProvider } from './context/CartContext';
 import { useEffect } from 'react';
 
 // Create a client
@@ -58,10 +59,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <StripeProvider>
-          <ErrorHandler />
-          {children}
-          <Toaster position="top-right" />
-          <ReactQueryDevtools initialIsOpen={false} />
+          <CartProvider>
+            <ErrorHandler />
+            {children}
+            <Toaster position="top-right" />
+            <ReactQueryDevtools initialIsOpen={false} />
+          </CartProvider>
         </StripeProvider>
       </AuthProvider>
     </QueryClientProvider>

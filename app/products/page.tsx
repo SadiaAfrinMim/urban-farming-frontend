@@ -29,10 +29,10 @@ export default function ProductsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-          <div className="text-xl text-gray-700 font-medium">লোড হচ্ছে...</div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#39FF14]"></div>
+          <div className="text-xl text-[#39FF14] font-medium">লোড হচ্ছে...</div>
         </div>
       </div>
     );
@@ -40,9 +40,9 @@ export default function ProductsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-red-50 to-pink-50 gap-4">
-        <div className="text-red-600 text-2xl font-bold mb-4">❌</div>
-        <div className="text-red-600 text-xl font-medium text-center">{error}</div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-black gap-4">
+        <div className="text-red-400 text-2xl font-bold mb-4">❌</div>
+        <div className="text-red-400 text-xl font-medium text-center">{error}</div>
         <button
           onClick={fetchProducts}
           className="px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-md"
@@ -54,32 +54,32 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 py-16 px-4">
+    <div className="min-h-screen bg-black py-16 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors">
+          <Link href="/" className="inline-flex items-center gap-2 text-[#39FF14] hover:text-[#28CC0C] font-medium transition-colors">
             ← হোম পেজে ফিরে যান
           </Link>
         </div>
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl font-bold text-[#39FF14] mb-4">
             🛒 সমস্ত প্রোডাক্ট
           </h1>
-          <p className="text-lg text-gray-600">আমাদের মার্কেটপ্লেস থেকে তাজা পণ্য বেছে নিন</p>
+          <p className="text-lg text-gray-400">আমাদের মার্কেটপ্লেস থেকে তাজা পণ্য বেছে নিন</p>
         </div>
 
         {products.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🛒</div>
-            <div className="text-gray-500 text-xl font-medium">কোনো প্রোডাক্ট পাওয়া যায়নি</div>
-            <div className="text-gray-400 text-sm mt-2">একটু পরে আবার চেষ্টা করুন</div>
+            <div className="text-gray-400 text-xl font-medium">কোনো প্রোডাক্ট পাওয়া যায়নি</div>
+            <div className="text-gray-500 text-sm mt-2">একটু পরে আবার চেষ্টা করুন</div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {products.map((product) => (
               <Link key={product.id} href={`/products/${product.id}`}>
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 cursor-pointer">
-                  <div className="relative h-56 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center overflow-hidden">
+                <div className="bg-gray-900 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-700 cursor-pointer">
+                  <div className="relative h-56 bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center overflow-hidden">
                     {product.image ? (
                       <img
                         src={product.image}
@@ -89,29 +89,29 @@ export default function ProductsPage() {
                     ) : (
                       <div className="flex flex-col items-center gap-2">
                         <span className="text-4xl">🥕</span>
-                        <span className="text-gray-500 font-medium">ছবি নেই</span>
+                        <span className="text-gray-400 font-medium">ছবি নেই</span>
                       </div>
                     )}
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-green-700">
+                    <div className="absolute top-3 left-3 bg-[#39FF14]/20 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-[#39FF14]">
                       {product.category || 'পণ্য'}
                     </div>
-                    <div className="absolute top-3 right-3 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                    <div className="absolute top-3 right-3 bg-[#39FF14] text-black px-2 py-1 rounded-full text-xs font-medium">
                       {product.certificationStatus === 'Approved' ? '✅ অনুমোদিত' : '⏳ অপেক্ষমান'}
                     </div>
                   </div>
                   <div className="p-6">
-                    <h3 className="font-bold text-xl text-gray-800 mb-3 line-clamp-1">{product.name}</h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">{product.description}</p>
+                    <h3 className="font-bold text-xl text-[#39FF14] mb-3 line-clamp-1">{product.name}</h3>
+                    <p className="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">{product.description}</p>
                     <div className="flex justify-between items-center">
                       <div className="flex flex-col">
-                        <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+                        <span className="text-2xl font-bold text-[#39FF14]">
                           ৳ {product.price}
                         </span>
                         <span className="text-xs text-gray-500">
                           {product.unit ? `প্রতি ${product.unit}` : 'প্রতি ইউনিট'}
                         </span>
                       </div>
-                      <div className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white text-sm font-medium rounded-xl text-center shadow-md">
+                      <div className="px-6 py-3 bg-gradient-to-r from-[#39FF14] to-[#28CC0C] text-black text-sm font-medium rounded-xl text-center shadow-md">
                         বিস্তারিত দেখুন
                       </div>
                     </div>

@@ -39,7 +39,7 @@ export default function RentalsPage() {
       const allSpaces = await api.getRentalSpaces();
       const filteredSpaces = allSpaces.filter(space =>
         space.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        space.location.toLowerCase().includes(searchQuery.toLowerCase())
+        space.size.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setSpaces(filteredSpaces);
     } catch (err) {
@@ -56,9 +56,26 @@ export default function RentalsPage() {
 
     try {
       setBookingLoading(space.id.toString());
+
+      // First create a payment intent for the rental
+      const paymentIntent = await api.createPaymentIntent(space.id.toString());
+
+      // For demo purposes, we'll simulate payment completion
+      // In production, you'd integrate with Stripe Elements or Checkout
+      const confirmed = confirm(`পেমেন্ট এমাউন্ট: ৳${space.price}। পেমেন্ট কনফার্ম করবেন?\n\n⚠️ এটি ডেমো পেমেন্ট। রিয়েল পেমেন্ট এর জন্য Stripe ইন্টিগ্রেশন প্রয়োজন।`);
+
+      if (!confirmed) {
+        setBookingLoading(null);
+        return;
+      }
+
+      // Confirm payment (this would typically be done after successful payment)
+      await api.confirmPayment(paymentIntent.client_secret);
+
+      // Now book the rental space
       await api.bookRentalSpace(space.id.toString());
       toast.success('রেন্টাল স্পেস সফলভাবে বুক করা হয়েছে!');
-      fetchSpaces(); // Refresh to update availability
+      setSpaces(prev => prev.map(s => s.id === space.id ? {...s, availability: false} : s));
     } catch (err: any) {
       console.error('Failed to book rental space:', err);
       toast.error(err?.response?.data?.message || 'বুক করা যায়নি। আবার চেষ্টা করুন।');
@@ -94,7 +111,7 @@ export default function RentalsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 py-16 px-4">
+    <div className="min-h-screen py-16 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <Link href="/" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors">
@@ -119,7 +136,7 @@ export default function RentalsPage() {
             />
             <button
               onClick={searchSpaces}
-              className="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
+              className="px-6 py-3 bg-gradient-to-r from-[#00FF00] to-[#39FF14] text-black rounded-xl hover:from-[#39FF14] hover:to-[#00FF41] transition-all duration-200 shadow-md hover:shadow-lg font-medium shadow-[#00FF00]/50 hover:shadow-[#39FF14]/70"
             >
               🔍 সার্চ
             </button>
@@ -128,7 +145,7 @@ export default function RentalsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {spaces.map((space) => (
-            <div key={space.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+            <div key={space.id} className="rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
               <div className="relative h-48 bg-gradient-to-br from-green-200 to-blue-200 flex items-center justify-center overflow-hidden">
                 <span className="text-6xl">🌱</span>
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-green-700">
@@ -148,16 +165,16 @@ export default function RentalsPage() {
                     <span className="text-xs text-gray-500">প্রতি মাস</span>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${space.availability ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {space.availability ? '✅ অভ্যন্তরীণ' : '❌ ব্যবহৃত'}
+                    {space.availability ? '✅ অভ্যন্তরীণ' : '❌ বুক করা'}
                   </span>
                 </div>
                 {space.availability && (
                   <button
                     onClick={() => handleBookSpace(space)}
                     disabled={bookingLoading === space.id.toString()}
-                    className="w-full py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl hover:from-green-600 hover:to-blue-600 transition-all duration-200 shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 bg-gradient-to-r from-[#00FF00] to-[#39FF14] text-black rounded-xl hover:from-[#39FF14] hover:to-[#00FF41] transition-all duration-200 shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-[#00FF00]/50 hover:shadow-[#39FF14]/70"
                   >
-                    {bookingLoading === space.id.toString() ? 'বুক হচ্ছে...' : '📅 বুক করুন'}
+                    {bookingLoading === space.id.toString() ? 'পেমেন্ট প্রসেস হচ্ছে...' : '💳 বুক করুন (পেমেন্ট সহ)'}
                   </button>
                 )}
               </div>

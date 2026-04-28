@@ -150,11 +150,11 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-16 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <Card className="text-center py-16">
             <LoadingSpinner size="lg" className="mx-auto mb-4" />
-            <p className="text-gray-700 font-medium">প্রোফাইল লোড হচ্ছে...</p>
+            <p className="text-gray-300 font-medium">প্রোফাইল লোড হচ্ছে...</p>
           </Card>
         </div>
       </div>
@@ -163,7 +163,7 @@ export default function ProfilePage() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-16 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <Alert type="error" message={error || "প্রোফাইল লোড করা যাচ্ছে না। অনুগ্রহ করে রিফ্রেশ করে আবার চেষ্টা করুন।"} />
           <div className="mt-6 text-center">
@@ -177,13 +177,13 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-16 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-16 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent mb-4">
             👤 প্রোফাইল
           </h1>
-          <p className="text-lg text-gray-600">আপনার প্রোফাইল তথ্য পরিচালনা করুন</p>
+          <p className="text-lg text-gray-300">আপনার প্রোফাইল তথ্য পরিচালনা করুন</p>
         </div>
 
         <Card className="mb-6">
@@ -201,12 +201,12 @@ export default function ProfilePage() {
                )}
              </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-semibold text-gray-900">{profile.name}</h2>
-              <p className="text-gray-600 mt-1">{profile.email}</p>
+              <h2 className="text-2xl font-semibold text-white">{profile.name}</h2>
+              <p className="text-gray-300 mt-1">{profile.email}</p>
               <div className="flex items-center gap-2 mt-2">
                 <StatusBadge status={profile.status} />
-                <span className="text-sm text-gray-500">•</span>
-                <span className="text-sm font-medium text-gray-700">{profile.role}</span>
+                <span className="text-sm text-gray-400">•</span>
+                <span className="text-sm font-medium text-gray-200">{profile.role}</span>
               </div>
             </div>
             <Button
@@ -235,16 +235,16 @@ export default function ProfilePage() {
                      )}
                   </div>
                   <div className="flex-1">
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    <label className="block text-sm font-semibold text-gray-200 mb-2">
                       প্রোফাইল ছবি
                     </label>
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleFileChange}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                      className="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-700 file:text-green-100 hover:file:bg-green-600"
                     />
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-gray-400">
                       JPG, PNG বা GIF ফরম্যাটে ছবি আপলোড করুন (সর্বোচ্চ 5MB)
                     </p>
                   </div>
@@ -253,14 +253,14 @@ export default function ProfilePage() {
 
               {/* Vendor Profile Photo Notice */}
               {profile.role === 'Vendor' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-gray-700 border border-gray-600 rounded-lg p-4">
                   <div className="flex items-center gap-3">
                      <div className="flex-shrink-0">
                        <ProfileImage user={profile} size="md" className="shadow-md" />
                      </div>
                     <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-blue-800 mb-1">ভেন্ডর প্রোফাইল ছবি</h4>
-                      <p className="text-sm text-blue-700">
+                      <h4 className="text-sm font-semibold text-gray-200 mb-1">ভেন্ডর প্রোফাইল ছবি</h4>
+                      <p className="text-sm text-gray-300">
                         ভেন্ডর প্রোফাইল ছবি পরিবর্তন করতে "ভেন্ডর প্রোফাইল" পেজে যান।
                       </p>
                     </div>
@@ -382,8 +382,8 @@ export default function ProfilePage() {
         <Card className="mb-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-xl font-semibold text-gray-900">🔐 পাসওয়ার্ড পরিবর্তন</h3>
-              <p className="text-gray-600 mt-1">আপনার অ্যাকাউন্টের নিরাপত্তা বজায় রাখার জন্য পাসওয়ার্ড পরিবর্তন করুন</p>
+              <h3 className="text-xl font-semibold text-white">🔐 পাসওয়ার্ড পরিবর্তন</h3>
+              <p className="text-gray-300 mt-1">আপনার অ্যাকাউন্টের নিরাপত্তা বজায় রাখার জন্য পাসওয়ার্ড পরিবর্তন করুন</p>
             </div>
             <Button
               onClick={() => setChangingPassword(!changingPassword)}

@@ -150,8 +150,10 @@ export interface UserProfile {
   };
 }
 
-// API Base URL
-const API_BASE_URL = 'http://localhost:5000/api/v1';
+// API Base URL - dynamically use environment variable or fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+  ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
+  : 'https://urban-farming-backend-pink.vercel.app/api/v1';
 
 // Custom error class for API errors
 export class ApiError extends Error {
@@ -176,8 +178,11 @@ const apiClient = {
       ...options.headers,
     };
 
-    // Note: Tokens are sent via httpOnly cookies automatically by the browser
-    // No need to manually add Authorization header
+    // Add Authorization header if token is available in localStorage
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
     // Log API call details
     const startTime = Date.now();
@@ -190,7 +195,6 @@ const apiClient = {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers,
-        credentials: 'include',
         ...options,
       });
 
@@ -312,7 +316,6 @@ const apiClient = {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers,
-        credentials: 'include',
         body: formData,
       });
 
@@ -749,6 +752,23 @@ const api = {
     return Array.isArray(data.data) ? data.data : [];
   },
 
+  getVendorDashboardStats: async (): Promise<{
+    totalSales: number;
+    activeRentals: number;
+    pendingOrders: number;
+    totalProducts: number;
+    monthlyEarnings: { month: string; earnings: number }[];
+  }> => {
+    const data = await apiClient.get<ApiResponse<{
+      totalSales: number;
+      activeRentals: number;
+      pendingOrders: number;
+      totalProducts: number;
+      monthlyEarnings: { month: string; earnings: number }[];
+    }>>('/vendor/dashboard/stats');
+    return data.data;
+  },
+
   createRentalSpace: async (spaceData: any) => {
     console.log('API: createRentalSpace called with:', spaceData instanceof FormData ? 'FormData' : 'JSON');
 
@@ -899,6 +919,27 @@ const api = {
 
   getFeaturedVendors: async () => {
     const data = await apiClient.get<ApiResponse<any[]>>('/home/featured-vendors');
+    return data.data;
+  },
+
+  // Notification APIs
+  getNotifications: async (page: number = 1, limit: number = 20) => {
+    const data = await apiClient.get<ApiResponse<any[]>>(`/notifications?page=${page}&limit=${limit}`);
+    return data;
+  },
+
+  getUnreadNotificationCount: async () => {
+    const data = await apiClient.get<ApiResponse<{ count: number }>>('/notifications/unread-count');
+    return data.data;
+  },
+
+  markNotificationAsRead: async (notificationId: number) => {
+    const data = await apiClient.patch<ApiResponse<any>>(`/notifications/${notificationId}/read`);
+    return data.data;
+  },
+
+  markAllNotificationsAsRead: async () => {
+    const data = await apiClient.patch<ApiResponse<any>>('/notifications/mark-all-read');
     return data.data;
   },
 };

@@ -7,6 +7,7 @@ import api from '../../lib/api';
 import toast from 'react-hot-toast';
 import { useUpdateRentalSpace, useDeleteRentalSpace } from '../../hooks/useApi';
 import Image from 'next/image';
+import { io } from 'socket.io-client';
 
 interface RentalSpace {
   id: string;
@@ -39,6 +40,38 @@ export default function RentalSpaceManagement() {
 
   useEffect(() => {
     fetchSpaces();
+
+    // WebSocket connection for real-time updates
+    const socket = io('http://localhost:5000/api/v1'); // Adjust URL as needed
+
+    socket.on('rental-space-created', (newSpace) => {
+      setSpaces(prev => [...prev, newSpace]);
+      toast.success('New rental space added');
+    });
+
+    socket.on('rental-space-updated', (updatedSpace) => {
+      setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
+      toast.success('Rental space updated');
+    });
+
+    socket.on('rental-space-deleted', ({ id }) => {
+      setSpaces(prev => prev.filter(space => space.id !== id));
+      toast.success('Rental space deleted');
+    });
+
+    socket.on('rental-space-availability-changed', (updatedSpace) => {
+      setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
+      toast.success('Availability changed');
+    });
+
+    socket.on('rental-space-booked', (bookedSpace) => {
+      setSpaces(prev => prev.map(space => space.id === bookedSpace.id ? { ...bookedSpace, availability: false } : space));
+      toast.success('Space booked');
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const fetchSpaces = async () => {
@@ -180,23 +213,23 @@ export default function RentalSpaceManagement() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 bg-black min-h-screen">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Rental Space Management</h1>
-          <p className="text-gray-600 mt-2">Manage your rental plots and track their status</p>
+          <h1 className="text-3xl font-bold text-[#39FF14]">Rental Space Management</h1>
+          <p className="text-gray-400 mt-2">Manage your rental plots and track their status</p>
         </div>
         <div className="flex gap-4">
           <Button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+            className="bg-[#39FF14] hover:bg-[#28CC0C] text-black px-6 py-2 rounded-lg"
           >
             {showAddForm ? 'Cancel' : '+ Add New Plot'}
           </Button>
@@ -219,7 +252,7 @@ export default function RentalSpaceManagement() {
       {showAddForm && (
         <Card className="mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Add New Rental Plot</h2>
+            <h2 className="text-xl font-semibold text-[#39FF14]">Add New Rental Plot</h2>
             <Button
               onClick={() => setShowAddForm(false)}
               variant="outline"
@@ -232,7 +265,7 @@ export default function RentalSpaceManagement() {
           <form onSubmit={(e) => { e.preventDefault(); handleAddSpace(addFormData); }} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="add-location" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="add-location" className="block text-sm font-medium text-gray-300 mb-2">
                   Location *
                 </label>
                 <Input
@@ -246,7 +279,7 @@ export default function RentalSpaceManagement() {
               </div>
 
               <div>
-                <label htmlFor="add-size" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="add-size" className="block text-sm font-medium text-gray-300 mb-2">
                   Size *
                 </label>
                 <Input
@@ -260,7 +293,7 @@ export default function RentalSpaceManagement() {
               </div>
 
               <div>
-                <label htmlFor="add-price" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="add-price" className="block text-sm font-medium text-gray-300 mb-2">
                   Price per Month *
                 </label>
                 <Input
@@ -276,7 +309,7 @@ export default function RentalSpaceManagement() {
               </div>
 
               <div>
-                <label htmlFor="add-image" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="add-image" className="block text-sm font-medium text-gray-300 mb-2">
                   Image (Optional)
                 </label>
                 <input
@@ -285,10 +318,10 @@ export default function RentalSpaceManagement() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => setAddImageFile(e.target.files?.[0] || null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#39FF14] bg-gray-800 text-white"
                 />
                 {addImageFile && (
-                  <p className="text-sm text-gray-600 mt-1">Selected: {addImageFile.name}</p>
+                  <p className="text-sm text-gray-400 mt-1">Selected: {addImageFile.name}</p>
                 )}
               </div>
             </div>
@@ -296,7 +329,7 @@ export default function RentalSpaceManagement() {
             <div className="flex gap-4">
               <Button
                 type="submit"
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-[#39FF14] hover:bg-[#28CC0C] text-black"
                 disabled={updating}
               >
                 {updating ? <LoadingSpinner size="sm" /> : 'Add Rental Space'}
@@ -320,7 +353,7 @@ export default function RentalSpaceManagement() {
       {editingSpace && (
         <Card className="mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Edit Rental Space</h2>
+            <h2 className="text-xl font-semibold text-[#39FF14]">Edit Rental Space</h2>
             <Button
               onClick={() => setEditingSpace(null)}
               variant="outline"
@@ -333,7 +366,7 @@ export default function RentalSpaceManagement() {
           <form onSubmit={handleUpdateSpace} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="location" className="block text-sm font-medium text-gray-300 mb-2">
                   Location *
                 </label>
                 <Input
@@ -346,7 +379,7 @@ export default function RentalSpaceManagement() {
               </div>
 
               <div>
-                <label htmlFor="size" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="size" className="block text-sm font-medium text-gray-300 mb-2">
                   Size *
                 </label>
                 <Input
@@ -359,7 +392,7 @@ export default function RentalSpaceManagement() {
               </div>
 
               <div>
-                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-2">
                   Price per Month *
                 </label>
                 <Input
@@ -374,7 +407,7 @@ export default function RentalSpaceManagement() {
               </div>
 
               <div>
-                <label htmlFor="edit-image" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="edit-image" className="block text-sm font-medium text-gray-300 mb-2">
                   Update Image (Optional)
                 </label>
                 <input
@@ -383,10 +416,10 @@ export default function RentalSpaceManagement() {
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#39FF14] bg-gray-800 text-white"
                 />
                 {selectedFile && (
-                  <p className="text-sm text-gray-600 mt-1">Selected: {selectedFile.name}</p>
+                  <p className="text-sm text-gray-400 mt-1">Selected: {selectedFile.name}</p>
                 )}
                 {editingSpace?.image && !selectedFile && (
                   <p className="text-sm text-gray-500 mt-1">Current image will be kept if no new image is selected</p>
@@ -398,7 +431,7 @@ export default function RentalSpaceManagement() {
               <Button
                 type="submit"
                 disabled={updating}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-[#39FF14] hover:bg-[#28CC0C] text-black"
               >
                 {updating ? <LoadingSpinner /> : 'Update Space'}
               </Button>
@@ -417,14 +450,14 @@ export default function RentalSpaceManagement() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {spaces.length === 0 && !loading ? (
           <div className="col-span-full text-center py-12">
-            <div className="text-gray-400 mb-4">
+            <div className="text-gray-500 mb-4">
               <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No rental spaces yet</h3>
-            <p className="text-gray-500 mb-4">Start by adding your first rental plot</p>
-            <Button onClick={() => setShowAddForm(true)} className="bg-green-600 hover:bg-green-700">
+            <h3 className="text-lg font-medium text-[#39FF14] mb-2">No rental spaces yet</h3>
+            <p className="text-gray-400 mb-4">Start by adding your first rental plot</p>
+            <Button onClick={() => setShowAddForm(true)} className="bg-[#39FF14] hover:bg-[#28CC0C] text-black">
               Add Your First Plot
             </Button>
           </div>
@@ -446,10 +479,10 @@ export default function RentalSpaceManagement() {
               <div className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                    <h3 className="text-lg font-semibold text-[#39FF14] mb-1">
                       {space.location}
                     </h3>
-                    <p className="text-sm text-gray-600">{space.size}</p>
+                    <p className="text-sm text-gray-400">{space.size}</p>
                   </div>
                   <StatusBadge status={space.availability ? 'active' : 'inactive'}>
                     {space.availability ? 'Available' : 'Occupied'}
@@ -458,16 +491,16 @@ export default function RentalSpaceManagement() {
 
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Price:</span>
-                    <span className="font-medium">${space.price}/month</span>
+                    <span className="text-gray-400">Price:</span>
+                    <span className="font-medium text-[#39FF14]">${space.price}/month</span>
                   </div>
 
                   {space.plantStatus && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Plant Status:</span>
+                      <span className="text-gray-400">Plant Status:</span>
                       <span className={`font-medium ${
-                        space.plantStatus === 'Healthy' ? 'text-green-600' :
-                        space.plantStatus === 'Sick' ? 'text-yellow-600' : 'text-red-600'
+                        space.plantStatus === 'Healthy' ? 'text-[#39FF14]' :
+                        space.plantStatus === 'Sick' ? 'text-yellow-400' : 'text-red-400'
                       }`}>
                         {space.plantStatus}
                       </span>
@@ -476,8 +509,8 @@ export default function RentalSpaceManagement() {
 
                   {space.lastWatered && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Last Watered:</span>
-                      <span className="font-medium">
+                      <span className="text-gray-400">Last Watered:</span>
+                      <span className="font-medium text-white">
                         {(() => {
                           try {
                             const date = new Date(space.lastWatered);
@@ -504,7 +537,7 @@ export default function RentalSpaceManagement() {
                     onClick={() => handleDeleteSpace(space.id)}
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-900"
                   >
                     🗑️ Delete
                   </Button>

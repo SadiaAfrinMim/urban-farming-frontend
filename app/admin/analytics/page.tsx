@@ -42,7 +42,7 @@ export default function AdminAnalyticsPage() {
   const { data: rentalAnalytics, isLoading: rentalLoading, error: rentalError } = useRentalAnalytics();
   const { data: revenueAnalytics, isLoading: revenueLoading, error: revenueError } = useRevenueAnalytics();
 
-  const orders = ordersData?.data || [];
+  const orders = ordersData || [];
   const loading = ordersLoading || rentalLoading || revenueLoading;
   const error = ordersError || rentalError || revenueError;
 
@@ -67,73 +67,75 @@ export default function AdminAnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-black py-12 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <Link href="/admin/dashboard" className="text-blue-600 hover:underline">← এডমিন ড্যাশবোর্ডে ফিরে যান</Link>
+          <Link href="/admin/dashboard" className="text-[#39FF14] hover:text-[#28CC0C] hover:underline">← এডমিন ড্যাশবোর্ডে ফিরে যান</Link>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">অ্যানালিটিক্স এবং রিপোর্ট</h1>
+        <h1 className="text-3xl font-bold text-[#39FF14] mb-8">অ্যানালিটিক্স এবং রিপোর্ট</h1>
 
         {/* Analytics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {analytics.rentalAnalytics && (
-            <div className="bg-white rounded-xl shadow-md p-6">
+          {rentalAnalytics && (
+            <div className="bg-gray-900 rounded-xl shadow-md p-6 border border-gray-700">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-[#39FF14]/20 rounded-full flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-[#39FF14]" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg text-gray-800">রেন্টাল স্পেস</h3>
+                  <h3 className="font-semibold text-lg text-[#39FF14]">রেন্টাল স্পেস</h3>
                 </div>
               </div>
-              <p className="text-2xl font-bold text-blue-600">{analytics.rentalAnalytics.totalSpaces}</p>
-              <p className="text-sm text-gray-600">মোট স্পেস: {analytics.rentalAnalytics.rentedSpaces} ভাড়া হয়েছে ({analytics.rentalAnalytics.rentedPercentage}%)</p>
+              <p className="text-2xl font-bold text-[#39FF14]">{rentalAnalytics.totalSpaces}</p>
+              <p className="text-sm text-gray-400">মোট স্পেস: {rentalAnalytics.rentedSpaces} ভাড়া হয়েছে ({rentalAnalytics.rentedPercentage}%)</p>
             </div>
           )}
 
-          {analytics.revenueAnalytics && (
+          {revenueAnalytics && (
             <>
-              <div className="bg-white rounded-xl shadow-md p-6">
+              <div className="bg-gray-900 rounded-xl shadow-md p-6 border border-gray-700">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-green-600" />
+                  <div className="w-10 h-10 bg-[#39FF14]/20 rounded-full flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-[#39FF14]" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-gray-800">মোট রেভেনু</h3>
+                    <h3 className="font-semibold text-lg text-[#39FF14]">মোট রেভেনু</h3>
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-green-600">৳{analytics.revenueAnalytics.totalRevenue.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">{analytics.revenueAnalytics.orderCount}টি অর্ডার থেকে</p>
+                <p className="text-2xl font-bold text-[#39FF14]">৳{revenueAnalytics.totalRevenue.toLocaleString()}</p>
+                <p className="text-sm text-gray-400">{revenueAnalytics.orderCount}টি অর্ডার থেকে</p>
               </div>
 
-              <div className="bg-white rounded-xl shadow-md p-6">
+              <div className="bg-gray-900 rounded-xl shadow-md p-6 border border-gray-700">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                  <div className="w-10 h-10 bg-[#39FF14]/20 rounded-full flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-[#39FF14]" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-gray-800">কমিশন</h3>
+                    <h3 className="font-semibold text-lg text-[#39FF14]">কমিশন</h3>
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-purple-600">৳{analytics.revenueAnalytics.commission.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">প্ল্যাটফর্ম কমিশন</p>
+                <p className="text-2xl font-bold text-[#39FF14]">৳{revenueAnalytics.commission.toLocaleString()}</p>
+                <p className="text-sm text-gray-400">প্ল্যাটফর্ম কমিশন</p>
+              </div>
+
+              <div className="bg-gray-900 rounded-xl shadow-md p-6 border border-gray-700">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-[#39FF14]/20 rounded-full flex items-center justify-center">
+                    <Package className="w-5 h-5 text-[#39FF14]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg text-[#39FF14]">মোট অর্ডার</h3>
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-[#39FF14]">{revenueAnalytics.orderCount}</p>
+                <p className="text-sm text-gray-400">সফল অর্ডারের সংখ্যা</p>
               </div>
             </>
           )}
 
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                <Package className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg text-gray-800">মোট অর্ডার</h3>
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-orange-600">{orders.length}</p>
-            <p className="text-sm text-gray-600">সাম্প্রতিক অর্ডার</p>
-          </div>
+
         </div>
 
         {/* Recent Orders */}

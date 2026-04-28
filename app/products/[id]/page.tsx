@@ -121,9 +121,9 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900 text-white">
       <div className="max-w-6xl mx-auto p-6">
-        <Link href="/marketplace" className="text-blue-600 mb-4 inline-block">
+        <Link href="/marketplace" className="text-blue-400 mb-4 inline-block">
           ← মার্কেটপ্লেসে ফিরে যান
         </Link>
 
@@ -137,8 +137,8 @@ export default function ProductDetailPage() {
           </div>
 
           <div>
-            <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
-            <p className="text-2xl text-green-600 font-bold mb-4">
+            <h1 className="text-3xl font-bold mb-4 text-white">{product.name}</h1>
+            <p className="text-2xl text-green-400 font-bold mb-4">
               ৳ {product.price} {product.unit ? `/ ${product.unit}` : '/ ইউনিট'}
             </p>
 

@@ -33,7 +33,6 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
         },
-        credentials: 'include', // Include cookies for any additional auth
         body: JSON.stringify({ orderId }),
       });
 

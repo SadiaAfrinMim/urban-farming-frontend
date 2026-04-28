@@ -81,7 +81,7 @@ export default function CustomerDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <LoadingSpinner />
       </div>
     );
@@ -89,7 +89,7 @@ export default function CustomerDashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-black">
         <Alert type="error" className="max-w-md">
           {error}
           <div className="mt-4">
@@ -104,57 +104,57 @@ export default function CustomerDashboardPage() {
 
   if (!dashboardData) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Data Available</h2>
-          <p className="text-gray-600">Unable to load dashboard information.</p>
+          <h2 className="text-xl font-semibold text-[#39FF14] mb-2">No Data Available</h2>
+          <p className="text-gray-400">Unable to load dashboard information.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto p-6 bg-black min-h-screen">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Customer Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome back, {dashboardData.user.name}!</p>
+        <h1 className="text-3xl font-bold text-[#39FF14]">Customer Dashboard</h1>
+        <p className="text-gray-400 mt-2">Welcome back, {dashboardData.user.name}!</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="text-center">
           <div className="p-6">
-            <div className="text-3xl font-bold text-blue-600 mb-2">
+            <div className="text-3xl font-bold text-[#39FF14] mb-2">
               {dashboardData.stats.postsCount}
             </div>
-            <div className="text-gray-600">Total Posts</div>
+            <div className="text-gray-400">Total Posts</div>
           </div>
         </Card>
 
         <Card className="text-center">
           <div className="p-6">
-            <div className="text-3xl font-bold text-green-600 mb-2">
+            <div className="text-3xl font-bold text-[#39FF14] mb-2">
               {dashboardData.stats.ordersCount}
             </div>
-            <div className="text-gray-600">Total Orders</div>
+            <div className="text-gray-400">Total Orders</div>
           </div>
         </Card>
 
         <Card className="text-center">
           <div className="p-6">
-            <div className="text-3xl font-bold text-yellow-600 mb-2">
+            <div className="text-3xl font-bold text-yellow-400 mb-2">
               {dashboardData.recentPosts.filter(p => !p.isApproved).length}
             </div>
-            <div className="text-gray-600">Pending Posts</div>
+            <div className="text-gray-400">Pending Posts</div>
           </div>
         </Card>
 
         <Card className="text-center">
           <div className="p-6">
-            <div className="text-3xl font-bold text-purple-600 mb-2">
+            <div className="text-3xl font-bold text-[#39FF14] mb-2">
               {dashboardData.recentPosts.filter(p => p.isApproved).length}
             </div>
-            <div className="text-gray-600">Approved Posts</div>
+            <div className="text-gray-400">Approved Posts</div>
           </div>
         </Card>
       </div>
@@ -163,18 +163,18 @@ export default function CustomerDashboardPage() {
         {/* Profile Information */}
         <Card>
           <div className="p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Profile Information</h2>
+            <h2 className="text-xl font-semibold text-[#39FF14] mb-4">Profile Information</h2>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                  <ProfileImage user={dashboardData.user} size="lg" />
                  <div>
-                  <h3 className="text-lg font-medium text-gray-900">{dashboardData.user.name}</h3>
-                  <p className="text-gray-600">{dashboardData.user.email}</p>
+                  <h3 className="text-lg font-medium text-[#39FF14]">{dashboardData.user.name}</h3>
+                  <p className="text-gray-400">{dashboardData.user.email}</p>
                   <div className="flex items-center mt-1">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      dashboardData.user.status === 'Active' ? 'bg-green-100 text-green-800' :
-                      dashboardData.user.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
+                      dashboardData.user.status === 'Active' ? 'bg-[#39FF14]/20 text-[#39FF14]' :
+                      dashboardData.user.status === 'Pending' ? 'bg-yellow-900 text-yellow-300' :
+                      'bg-red-900 text-red-300'
                     }`}>
                       {dashboardData.user.status || 'Active'}
                     </span>
@@ -183,9 +183,9 @@ export default function CustomerDashboardPage() {
               </div>
             </div>
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="mt-6 pt-6 border-t border-gray-700">
               <Link href="/customer/posts">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                <Button className="w-full bg-[#39FF14] hover:bg-[#28CC0C] text-black">
                   Manage My Posts
                 </Button>
               </Link>
@@ -196,7 +196,7 @@ export default function CustomerDashboardPage() {
         {/* Recent Posts */}
         <Card>
           <div className="p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Posts</h2>
+            <h2 className="text-xl font-semibold text-[#39FF14] mb-4">Recent Posts</h2>
 
             {dashboardData.recentPosts.length === 0 ? (
               <div className="text-center py-8">

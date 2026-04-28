@@ -24,10 +24,10 @@ export const Button: React.FC<ButtonProps> = ({
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantClasses = {
-    primary: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
+    primary: 'bg-[#39FF14] text-black hover:bg-[#28CC0C] focus:ring-[#39FF14]',
+    secondary: 'bg-gray-700 text-white hover:bg-gray-600 focus:ring-gray-500',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-green-500',
+    outline: 'border border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700 focus:ring-[#39FF14]',
   };
 
   const sizeClasses = {
@@ -78,13 +78,13 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className={`${widthClass} ${className}`}>
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-semibold text-gray-800 mb-2">
+        <label htmlFor={inputId} className="block text-sm font-semibold text-gray-200 mb-2">
           {label}
         </label>
       )}
       <input
         id={inputId}
-        className={`px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${widthClass} ${
+        className={`px-4 py-3 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] transition-colors bg-gray-800 text-white ${widthClass} ${
           error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''
         }`}
         {...props}
@@ -117,13 +117,13 @@ export const Textarea: React.FC<TextareaProps> = ({
   return (
     <div className={`${widthClass} ${className}`}>
       {label && (
-        <label htmlFor={textareaId} className="block text-sm font-semibold text-gray-800 mb-2">
+        <label htmlFor={textareaId} className="block text-sm font-semibold text-gray-200 mb-2">
           {label}
         </label>
       )}
       <textarea
         id={textareaId}
-        className={`px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors resize-none ${widthClass} ${
+        className={`px-4 py-3 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] transition-colors resize-none bg-gray-800 text-white ${widthClass} ${
           error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''
         }`}
         {...props}
@@ -158,13 +158,13 @@ export const Select: React.FC<SelectProps> = ({
   return (
     <div className={`${widthClass} ${className}`}>
       {label && (
-        <label htmlFor={selectId} className="block text-sm font-semibold text-gray-800 mb-2">
+        <label htmlFor={selectId} className="block text-sm font-semibold text-gray-200 mb-2">
           {label}
         </label>
       )}
       <select
         id={selectId}
-        className={`px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors ${widthClass} ${
+        className={`px-4 py-3 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] transition-colors bg-gray-800 text-white ${widthClass} ${
           error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''
         }`}
         {...props}
@@ -209,7 +209,7 @@ export const Card: React.FC<CardProps> = ({
   };
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-100 ${paddingClasses[padding]} ${shadowClasses[shadow]} ${className}`}>
+    <div className={`bg-gray-900 rounded-lg border border-gray-700 ${paddingClasses[padding]} ${shadowClasses[shadow]} ${className}`}>
       {children}
     </div>
   );
@@ -232,7 +232,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   };
 
   return (
-    <div className={`animate-spin rounded-full border-b-2 border-green-600 ${sizeClasses[size]} ${className}`}></div>
+    <div className={`animate-spin rounded-full border-b-2 border-[#39FF14] ${sizeClasses[size]} ${className}`}></div>
   );
 };
 
@@ -280,10 +280,10 @@ export const LoadingPage: React.FC<LoadingPageProps> = ({
   message = 'Loading...'
 }) => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-black">
       <div className="text-center">
         <LoadingSpinner size="lg" className="mx-auto mb-4" />
-        <p className="text-gray-600">{message}</p>
+        <p className="text-gray-400">{message}</p>
       </div>
     </div>
   );
@@ -302,15 +302,15 @@ export const ErrorPage: React.FC<ErrorPageProps> = ({
   onRetry
 }) => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-black">
       <div className="text-center max-w-md">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-16 h-16 bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
-        <p className="text-gray-600 mb-6">{message}</p>
+        <h1 className="text-2xl font-bold text-gray-100 mb-2">{title}</h1>
+        <p className="text-gray-400 mb-6">{message}</p>
         {onRetry && (
           <Button onClick={onRetry} variant="primary">
             Try Again

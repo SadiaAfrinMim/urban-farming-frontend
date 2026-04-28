@@ -137,5 +137,4 @@ export default function VendorOrdersPage() {
       )}
     </div>
   );
-}</content>
-<parameter name="filePath">frontend-product/app/vendor/orders/page.tsx
+}

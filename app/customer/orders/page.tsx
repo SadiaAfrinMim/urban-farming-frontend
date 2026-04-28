@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import api, { Order } from '../lib/api';
-import { useAuth } from '../contexts/AuthContext';
+import api, { Order } from '@/app/lib/api';
+import { useAuth } from '@/app/contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function CustomerOrdersPage() {
@@ -116,5 +116,4 @@ export default function CustomerOrdersPage() {
       )}
     </div>
   );
-}</content>
-<parameter name="filePath">frontend-product/app/customer/orders/page.tsx
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   PaymentElement,
   useStripe,
@@ -9,6 +9,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 interface CheckoutFormProps {
   orderId: string;
@@ -20,6 +21,41 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ orderId }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [orderDetails, setOrderDetails] = useState<{
+    amount: number;
+    originalAmount: number;
+    currency: string;
+    produce?: { name: string; price: number };
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      try {
+        const accessToken = localStorage.getItem('accessToken');
+        const response = await axios.get(`http://localhost:5000/api/v1/orders/${orderId}`, {
+          headers: {
+            Authorization: accessToken ? `Bearer ${accessToken}` : '',
+          },
+        });
+
+        if (response.data.success) {
+          const order = response.data.data;
+          setOrderDetails({
+            amount: order.totalPrice || (order.produce?.price * order.quantity),
+            originalAmount: order.totalPrice || (order.produce?.price * order.quantity),
+            currency: 'BDT',
+            produce: order.produce,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch order details:', error);
+      }
+    };
+
+    if (orderId) {
+      fetchOrderDetails();
+    }
+  }, [orderId]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -64,6 +100,26 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ orderId }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {orderDetails && (
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">পেমেন্ট সামারি</h3>
+          <div className="space-y-1">
+            <p className="text-sm text-gray-600">
+              প্রোডাক্ট: <span className="font-medium">{orderDetails.produce?.name || 'Unknown Product'}</span>
+            </p>
+            <p className="text-sm text-gray-600">
+              মূল মূল্য: <span className="font-medium">৳{orderDetails.originalAmount.toFixed(2)}</span>
+            </p>
+            <p className="text-sm text-gray-600">
+              পেমেন্ট মূল্য: <span className="font-medium text-green-600">${orderDetails.amount.toFixed(2)} USD</span>
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              * মূল্য USD-তে কনভার্ট করা হয়েছে (আনুমানিক রেট: ৳120 = $1)
+            </p>
+          </div>
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           বিলিং তথ্য

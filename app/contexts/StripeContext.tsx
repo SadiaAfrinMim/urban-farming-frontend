@@ -4,7 +4,11 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { loadStripe, Stripe } from '@stripe/stripe-js';
 
 // Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+if (!stripeKey) {
+  console.error('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not defined. Please check your .env.local file.');
+}
+const stripePromise = loadStripe(stripeKey || 'pk_test_missing_key');
 
 interface StripeContextType {
   stripePromise: Promise<Stripe | null>;
