@@ -129,23 +129,23 @@ export default function VendorCommunityPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-black">
       <div className="max-w-7xl mx-auto p-6">
         {/* Hero Section with Enhanced Design */}
         <div className="relative mb-12">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-600 dark:from-emerald-600 dark:via-teal-700 dark:to-cyan-800 rounded-3xl opacity-10 blur-3xl"></div>
-          <div className="relative bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-gray-200/20 dark:border-gray-700/20">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#39FF14]/20 to-[#28CC0C]/20 rounded-3xl opacity-10 blur-3xl"></div>
+          <div className="relative bg-gray-900/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-[#39FF14]/20">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-2xl">
+                  <div className="w-12 h-12 bg-[#39FF14]/20 rounded-full flex items-center justify-center text-2xl">
                     🌱
                   </div>
-                  <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                  <h1 className="text-4xl lg:text-5xl font-bold text-[#39FF14]">
                     Vendor Community
                   </h1>
                 </div>
-                <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed max-w-2xl">
+                <p className="text-lg text-gray-400 leading-relaxed max-w-2xl">
                   Connect with fellow vendors, exchange groundbreaking farming insights, and cultivate success together in our vibrant community ecosystem.
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -271,51 +271,51 @@ export default function VendorCommunityPage() {
 
         {/* Enhanced Community Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-          <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-gray-200/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 group">
+          <div className="bg-gray-900/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-[#39FF14]/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 group">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <div className="w-16 h-16 bg-[#39FF14]/20 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform">
                 👥
               </div>
-              <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
+              <div className="text-4xl font-bold text-[#39FF14] mb-2">
                 {posts?.length || 0}
               </div>
-              <div className="text-gray-600 dark:text-gray-400 font-medium">Total Posts</div>
+              <div className="text-gray-400 font-medium">Total Posts</div>
             </div>
           </div>
 
-          <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-gray-200/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 group">
+          <div className="bg-gray-900/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-[#39FF14]/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 group">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <div className="w-16 h-16 bg-[#39FF14]/20 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform">
                 💡
               </div>
-              <div className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
+              <div className="text-4xl font-bold text-[#39FF14] mb-2">
                 {posts?.filter(p => p.postContent?.startsWith('[TIP]')).length || 0}
               </div>
-              <div className="text-gray-600 dark:text-gray-400 font-medium">Tips Shared</div>
+              <div className="text-gray-400 font-medium">Tips Shared</div>
             </div>
           </div>
 
-          <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-gray-200/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 group">
+          <div className="bg-gray-900/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-[#39FF14]/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 group">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <div className="w-16 h-16 bg-[#39FF14]/20 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform">
                 ❓
               </div>
-              <div className="text-4xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent mb-2">
+              <div className="text-4xl font-bold text-[#39FF14] mb-2">
                 {posts?.filter(p => p.postContent?.startsWith('[QUESTION]')).length || 0}
               </div>
-              <div className="text-gray-600 dark:text-gray-400 font-medium">Questions Asked</div>
+              <div className="text-gray-400 font-medium">Questions Asked</div>
             </div>
           </div>
 
-          <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-gray-200/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 group">
+          <div className="bg-gray-900/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-[#39FF14]/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 group">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <div className="w-16 h-16 bg-[#39FF14]/20 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 group-hover:scale-110 transition-transform">
                 🌱
               </div>
-              <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+              <div className="text-4xl font-bold text-[#39FF14] mb-2">
                 {posts?.filter(p => p.postContent?.startsWith('[EXPERIENCE]')).length || 0}
               </div>
-              <div className="text-gray-600 dark:text-gray-400 font-medium">Experiences Shared</div>
+              <div className="text-gray-400 font-medium">Experiences Shared</div>
             </div>
           </div>
         </div>
@@ -323,19 +323,19 @@ export default function VendorCommunityPage() {
         {/* Enhanced Posts List */}
         <div className="space-y-8">
           {posts && posts.length === 0 ? (
-            <div className="bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl p-16 shadow-xl border border-gray-200/20 dark:border-gray-700/20 text-center">
-              <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-6xl mx-auto mb-6 animate-bounce">
+            <div className="bg-gray-900/80 backdrop-blur-sm rounded-3xl p-16 shadow-xl border border-[#39FF14]/20 text-center">
+              <div className="w-24 h-24 bg-[#39FF14]/20 rounded-full flex items-center justify-center text-6xl mx-auto mb-6 animate-bounce">
                 🌱
               </div>
-              <h3 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-4">
+              <h3 className="text-3xl font-bold text-[#39FF14] mb-4">
                 No posts yet
               </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+              <p className="text-lg text-gray-400 mb-8 max-w-md mx-auto">
                 Be the first to share your farming wisdom and help build our vibrant community!
               </p>
               <Button
                 onClick={() => setShowCreateForm(true)}
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="bg-[#39FF14] hover:bg-[#28CC0C] text-black px-8 py-4 rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
                 🚀 Create First Post
               </Button>
@@ -346,7 +346,7 @@ export default function VendorCommunityPage() {
               const cleanContent = getCleanContent(post.postContent || '');
 
               return (
-                <div key={post.id} className="bg-gray-100/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-gray-200/20 dark:border-gray-700/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+                <div key={post.id} className="bg-gray-900/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-[#39FF14]/20 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
                   <div className="flex justify-between items-start mb-6">
                      <div className="flex items-center gap-4">
                        <div className="relative">
@@ -487,8 +487,8 @@ export default function VendorCommunityPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-gray-200/20 dark:border-gray-700/20">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Quick Actions</h2>
+        <div className="mt-8 bg-gray-900/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-[#39FF14]/20">
+          <h2 className="text-xl font-semibold text-[#39FF14] mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Button
                 onClick={() => setShowCreateForm(true)}

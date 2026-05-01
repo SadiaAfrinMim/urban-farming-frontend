@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Chatbot from "./components/Chatbot";
 import Providers from "./providers";
 
@@ -43,6 +44,7 @@ export default function RootLayout({
           <main className="flex-1">
             {children}
           </main>
+          <Footer />
           <Chatbot />
         </Providers>
       </body>

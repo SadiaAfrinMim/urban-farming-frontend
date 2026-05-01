@@ -160,10 +160,18 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen bg-black py-16 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
+        <div className="mb-8 flex justify-between items-center">
           <Link href="/" className="inline-flex items-center gap-2 text-[#39FF14] hover:text-[#28CC0C] font-medium transition-colors">
             ← হোম পেজে ফিরে যান
           </Link>
+          <div className="flex gap-4">
+            <Link href="/orders" className="text-[#39FF14] hover:text-[#28CC0C] font-medium transition-colors">
+              📦 আমার অর্ডার
+            </Link>
+            <Link href="/profile" className="text-[#39FF14] hover:text-[#28CC0C] font-medium transition-colors">
+              👤 প্রোফাইল
+            </Link>
+          </div>
         </div>
 
         <div className="text-center mb-12">

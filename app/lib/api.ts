@@ -24,7 +24,9 @@ export interface Produce {
   unit?: string;
   createdAt: string;
   updatedAt: string;
+  vendorId?: string;
   vendor?: {
+    id?: string;
     user: {
       name: string;
     };
@@ -128,10 +130,14 @@ export interface Order {
   userId: string;
   totalAmount?: number;
   total?: number;
+  totalPrice?: number;
   status: string;
   createdAt: string;
   items?: any[];
   produce?: Produce;
+  rentalSpace?: RentalSpace;
+  vendor?: any;
+  vendorId?: number;
 }
 
 export interface ChatMessage {
@@ -836,6 +842,11 @@ const api = {
 
   updateOrderStatus: async (orderId: number, status: string): Promise<Order> => {
     const data = await apiClient.patch<ApiResponse<Order>>(`/vendor/orders/${orderId}/status`, { status });
+    return data.data;
+  },
+
+  updateRentalOrderStatus: async (orderId: string, status: string): Promise<Order> => {
+    const data = await apiClient.patch<ApiResponse<Order>>(`/customer/rental-orders/${orderId}/status`, { status });
     return data.data;
   },
 

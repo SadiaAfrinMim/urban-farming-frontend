@@ -113,11 +113,11 @@ export default function VendorProfile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="min-h-screen bg-gray-900 py-12 px-4">
         <div className="max-w-4xl mx-auto">
-          <Card className="text-center py-16">
+          <Card className="bg-gray-800 text-white text-center py-16">
             <LoadingSpinner size="lg" className="mx-auto mb-4" />
-            <p className="text-gray-600">প্রোফাইল লোড হচ্ছে...</p>
+            <p className="text-gray-300">প্রোফাইল লোড হচ্ছে...</p>
           </Card>
         </div>
       </div>
@@ -126,7 +126,7 @@ export default function VendorProfile() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="min-h-screen bg-gray-900 py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <Alert type="error" message="প্রোফাইল লোড করা যাচ্ছে না। অনুগ্রহ করে রিফ্রেশ করে আবার চেষ্টা করুন।" />
           <div className="mt-4 text-center">
@@ -140,11 +140,11 @@ export default function VendorProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-gray-900 py-12 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">ফার্ম প্রোফাইল এবং সার্টিফিকেশন</h1>
-          <p className="text-gray-600 mt-2">আপনার ফার্মের তথ্য এবং সার্টিফিকেশন পরিচালনা করুন</p>
+          <h1 className="text-3xl font-bold text-white">ফার্ম প্রোফাইল এবং সার্টিফিকেশন</h1>
+          <p className="text-gray-300 mt-2">আপনার ফার্মের তথ্য এবং সার্টিফিকেশন পরিচালনা করুন</p>
         </div>
 
         {updateProfileMutation.isError && (
@@ -155,7 +155,7 @@ export default function VendorProfile() {
           />
         )}
 
-        <Card className="mb-6">
+        <Card className="bg-gray-800 text-white mb-6">
           {/* Profile Photo Display */}
           <div className="flex items-center mb-6">
             <div className="flex-shrink-0 mr-6">
@@ -166,12 +166,12 @@ export default function VendorProfile() {
                   profileData: { profilePhoto: profile?.profilePhoto }
                 }}
                 size="lg"
-                className="border-4 border-green-100 shadow-lg"
+                className="border-4 border-[#39ff14]/10 shadow-lg"
               />
             </div>
             <div className="flex-1">
-              <h2 className="text-xl font-semibold text-gray-900">ফার্ম তথ্য</h2>
-              <p className="text-gray-600 mt-1">{profile?.farmName || 'ফার্মের নাম যোগ করুন'}</p>
+              <h2 className="text-xl font-semibold text-white">ফার্ম তথ্য</h2>
+              <p className="text-gray-300 mt-1">{profile?.farmName || 'ফার্মের নাম যোগ করুন'}</p>
             </div>
             <Button
               onClick={() => setEditing(!editing)}
@@ -203,7 +203,7 @@ export default function VendorProfile() {
             />
 
             <div>
-              <label htmlFor="profilePhoto" className="block text-sm font-semibold text-gray-800 mb-2">
+              <label htmlFor="profilePhoto" className="block text-sm font-semibold text-gray-200 mb-2">
                 প্রোফাইল ফটো
               </label>
               <div className="relative">
@@ -213,16 +213,16 @@ export default function VendorProfile() {
                   id="profilePhoto"
                   accept="image/*"
                   onChange={handleProfilePhotoChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                  className="w-full px-4 py-3 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39ff14] focus:border-[#39ff14] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-[#39ff14]/5 file:text-[#39ff14] hover:file:bg-[#39ff14]/10"
                 />
               </div>
-              <p className="text-sm text-gray-600 mt-1">প্রোফাইল ফটো আপলোড করুন (ঐচ্ছিক, সর্বোচ্চ 5MB)</p>
+              <p className="text-sm text-gray-300 mt-1">প্রোফাইল ফটো আপলোড করুন (ঐচ্ছিক, সর্বোচ্চ 5MB)</p>
               {profilePhoto && (
                 <div className="mt-2 relative inline-block">
                   <img
                     src={URL.createObjectURL(profilePhoto)}
                     alt="প্রোফাইল ফটো প্রিভিউ"
-                    className="w-20 h-20 object-cover rounded-full border border-gray-300"
+                    className="w-20 h-20 object-cover rounded-full border border-gray-600"
                   />
                   <button
                     type="button"
@@ -257,16 +257,16 @@ export default function VendorProfile() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span className="text-sm font-medium text-gray-500">ফার্মের নাম:</span>
-                <p className="text-lg font-semibold text-gray-900 mt-1">{profile?.farmName}</p>
+                <span className="text-sm font-medium text-gray-400">ফার্মের নাম:</span>
+                <p className="text-lg font-semibold text-white mt-1">{profile?.farmName}</p>
               </div>
               <div>
-                <span className="text-sm font-medium text-gray-500">অবস্থান:</span>
-                <p className="text-lg font-semibold text-gray-900 mt-1">{profile?.farmLocation}</p>
+                <span className="text-sm font-medium text-gray-400">অবস্থান:</span>
+                <p className="text-lg font-semibold text-white mt-1">{profile?.farmLocation}</p>
               </div>
             </div>
             <div>
-              <span className="text-sm font-medium text-gray-500">সার্টিফিকেশন স্ট্যাটাস:</span>
+              <span className="text-sm font-medium text-gray-400">সার্টিফিকেশন স্ট্যাটাস:</span>
               <div className="mt-1">
                 <StatusBadge status={profile?.certificationStatus || 'Pending'} />
               </div>
@@ -275,12 +275,12 @@ export default function VendorProfile() {
         )}
         </Card>
 
-        <Card>
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">সার্টিফিকেশন ডকুমেন্টস</h2>
+        <Card className="bg-gray-800 text-white">
+          <h2 className="text-xl font-semibold text-white mb-6">সার্টিফিকেশন ডকুমেন্টস</h2>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold text-gray-200 mb-2">
                 নতুন ডকুমেন্ট আপলোড করুন
               </label>
               <div className="relative">
@@ -289,20 +289,20 @@ export default function VendorProfile() {
                   multiple
                   onChange={handleFileChange}
                   accept=".pdf,.jpg,.jpeg,.png"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                  className="w-full px-4 py-3 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#39ff14] focus:border-[#39ff14] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-[#39ff14]/5 file:text-[#39ff14] hover:file:bg-[#39ff14]/10"
                 />
               </div>
-              <p className="text-sm text-gray-600 mt-1">PDF বা ইমেজ ফাইল আপলোড করুন (প্রতিটি সর্বোচ্চ 5MB)। ইমেজগুলো ক্লিক করে বড় করে দেখতে পারবেন।</p>
+              <p className="text-sm text-gray-300 mt-1">PDF বা ইমেজ ফাইল আপলোড করুন (প্রতিটি সর্বোচ্চ 5MB)। ইমেজগুলো ক্লিক করে বড় করে দেখতে পারবেন।</p>
             </div>
 
             {profile?.certifications && profile.certifications.length > 0 && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">আপলোড করা ডকুমেন্টস:</h3>
+                <h3 className="text-lg font-medium text-white mb-3">আপলোড করা ডকুমেন্টস:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {profile.certifications.map((cert, index) => {
                     const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(cert);
                     return (
-                      <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-700">
                         {isImage ? (
                           <div className="relative mb-2">
                             <img
@@ -321,18 +321,18 @@ export default function VendorProfile() {
                               }}
                             />
                             <div className="fallback-icon hidden items-center gap-3">
-                              <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
-                              <span className="text-sm font-medium text-gray-900 truncate flex-1">সার্টিফিকেশন {index + 1}</span>
+                              <span className="text-sm font-medium text-white truncate flex-1">সার্টিফিকেশন {index + 1}</span>
                             </div>
                           </div>
                         ) : (
                           <div className="flex items-center gap-3 mb-2">
-                            <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            <span className="text-sm font-medium text-gray-900 truncate flex-1">সার্টিফিকেশন {index + 1}</span>
+                            <span className="text-sm font-medium text-white truncate flex-1">সার্টিফিকেশন {index + 1}</span>
                           </div>
                         )}
                         <Button
@@ -355,7 +355,7 @@ export default function VendorProfile() {
 
             {certifications.length > 0 && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">নতুন আপলোড করা ডকুমেন্টস:</h3>
+                <h3 className="text-lg font-medium text-white mb-3">নতুন আপলোড করা ডকুমেন্টস:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {certifications.map((file, index) => (
                     <div key={index} className="relative bg-blue-50 rounded-lg p-3 border border-blue-200">
@@ -404,8 +404,8 @@ export default function VendorProfile() {
         </Card>
 
         {/* Sustainability Certificates Section */}
-        <Card>
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">🌱 সাস্টেইনেবিলিটি সার্টিফিকেটস</h2>
+        <Card className="bg-gray-800 text-white">
+          <h2 className="text-xl font-semibold text-white mb-6">🌱 সাস্টেইনেবিলিটি সার্টিফিকেটস</h2>
 
           {certsLoading ? (
             <div className="flex justify-center py-8">
@@ -414,20 +414,20 @@ export default function VendorProfile() {
           ) : sustainabilityCerts && sustainabilityCerts.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {sustainabilityCerts.map((cert) => (
-                <div key={cert.id} className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <div key={cert.id} className="bg-[#39ff14]/5 rounded-lg p-4 border border-[#39ff14]/20">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="flex-shrink-0">
-                      <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-8 h-8 text-[#39ff14]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-semibold text-green-800 truncate">{cert.title}</h4>
-                      <p className="text-xs text-green-600">{cert.category}</p>
+                      <h4 className="text-sm font-semibold text-[#39ff14] truncate">{cert.title}</h4>
+                      <p className="text-xs text-[#39ff14]">{cert.category}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-green-700 mb-3">{cert.description}</p>
-                  <div className="flex items-center justify-between text-xs text-green-600">
+                  <p className="text-sm text-[#39ff14] mb-3">{cert.description}</p>
+                  <div className="flex items-center justify-between text-xs text-[#39ff14]">
                     <span>সার্টিফাইড</span>
                     <span className="font-medium">✓</span>
                   </div>
@@ -437,8 +437,8 @@ export default function VendorProfile() {
           ) : (
             <div className="text-center py-8">
               <div className="text-4xl mb-4">🌱</div>
-              <div className="text-gray-600 text-lg font-medium">কোনো সাস্টেইনেবিলিটি সার্টিফিকেট পাওয়া যায়নি</div>
-              <div className="text-gray-500 text-sm mt-2">সার্টিফিকেট যোগ করার জন্য অ্যাডমিনের সাথে যোগাযোগ করুন</div>
+              <div className="text-gray-300 text-lg font-medium">কোনো সাস্টেইনেবিলিটি সার্টিফিকেট পাওয়া যায়নি</div>
+              <div className="text-gray-400 text-sm mt-2">সার্টিফিকেট যোগ করার জন্য অ্যাডমিনের সাথে যোগাযোগ করুন</div>
             </div>
           )}
         </Card>

@@ -72,24 +72,38 @@ export default function Home() {
     <div className="min-h-screen bg-black">
       {/* 1. Hero Section */}
       <section className="relative bg-[#39FF14] text-black overflow-hidden min-h-screen flex items-center">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] opacity-10"></div>
-        {/* Animated background elements */}
-        <div className="absolute top-20 left-10 w-32 h-32 bg-black/10 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-24 h-24 bg-black/10 rounded-full blur-lg animate-bounce"></div>
-        <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-black/10 rounded-full blur-md animate-ping"></div>
+        <video
+          autoPlay
+          loop
+          muted
+          className="absolute inset-0 w-full h-full object-cover"
+          src="/10847025-hd_1920_1080_25fps.mp4"
+        ></video>
+        {/* Premium gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-[#39FF14]/40 to-black/30"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20"></div>
+        <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] opacity-5"></div>
+        {/* Enhanced animated background elements */}
+        <div className="absolute top-20 left-10 w-40 h-40 bg-[#39FF14]/20 rounded-full blur-2xl animate-pulse shadow-2xl shadow-[#39FF14]/30"></div>
+        <div className="absolute bottom-20 right-10 w-32 h-32 bg-[#39FF14]/25 rounded-full blur-xl animate-bounce shadow-xl shadow-[#39FF14]/40"></div>
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-[#28CC0C]/30 rounded-full blur-lg animate-ping shadow-lg shadow-[#28CC0C]/50"></div>
+        <div className="absolute top-1/3 right-1/4 w-28 h-28 bg-[#39FF14]/15 rounded-full blur-xl animate-pulse animation-delay-300 shadow-xl shadow-[#39FF14]/20"></div>
 
         <div className="relative max-w-7xl mx-auto px-4 py-20 lg:py-32 w-full">
           <div className="text-center">
-            <div className="inline-block p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 mb-6 animate-fade-in">
-              <span className="text-2xl">🚀 নতুন যুগের কৃষি প্রযুক্তি</span>
+            <div className="inline-block p-4 bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 shadow-lg shadow-white/10 mb-6 animate-fade-in">
+              <span className="text-2xl text-white font-semibold">🚀 নতুন যুগের কৃষি প্রযুক্তি</span>
             </div>
-            <h1 className="text-5xl lg:text-7xl font-bold mb-6 animate-fade-in text-black">
-              🌱 অর্বান ফার্মিং
+            <h1 className="text-5xl lg:text-7xl font-bold mb-6 animate-fade-in">
+              <span className="bg-gradient-to-r from-white via-[#39FF14] to-[#28CC0C] bg-clip-text text-transparent drop-shadow-2xl">
+                🌱 অর্বান ফার্মিং
+              </span>
               <br />
-              <span className="text-black drop-shadow-lg">মার্কেটপ্লেস</span>
+              <span className="bg-gradient-to-r from-[#39FF14] via-[#28CC0C] to-white bg-clip-text text-transparent drop-shadow-2xl">
+                মার্কেটপ্লেস
+              </span>
             </h1>
-            <p className="text-xl lg:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed opacity-90 animate-fade-in animation-delay-200">
+            <p className="text-xl lg:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed text-white/95 font-medium animate-fade-in animation-delay-200 drop-shadow-lg">
               তাজা, স্বাস্থ্যকর এবং স্থানীয়ভাবে উৎপাদিত পণ্য কিনুন।
               কৃষকদের সাথে সরাসরি যুক্ত হোন।
             </p>
@@ -441,10 +455,17 @@ export default function Home() {
 
       {/* 6. Statistics */}
       <section className="py-20 px-4 bg-gradient-to-r from-black via-gray-900 to-black text-[#39FF14] relative overflow-hidden">
+        <video
+          autoPlay
+          loop
+          muted
+          className="absolute inset-0 w-full h-full object-cover"
+          src="/15146916_1080_1920_30fps.mp4"
+        ></video>
         {/* Animated background */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-full h-full opacity-20">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-transparent to-black/60"></div>
           </div>
         </div>
 
