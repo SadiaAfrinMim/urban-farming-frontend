@@ -29,9 +29,9 @@ export default function ProductManagement() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    price: 0,
+    price: '',
     category: '',
-    availableQuantity: 0,
+    availableQuantity: '',
     unit: 'kg',
     image: null as File | null,
   });
@@ -45,27 +45,26 @@ export default function ProductManagement() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const submitData = {
+      name: formData.name,
+      description: formData.description,
+      price: parseFloat(formData.price),
+      category: formData.category,
+      availableQuantity: parseInt(formData.availableQuantity),
+      unit: formData.unit,
+    };
+
     if (editingProduct) {
       updateMutation.mutate({
         id: editingProduct.id,
         data: {
-          name: formData.name,
-          description: formData.description,
-          price: formData.price,
-          category: formData.category,
-          availableQuantity: formData.availableQuantity,
-          unit: formData.unit,
+          ...submitData,
           certificationStatus: editingProduct.certificationStatus, // Keep existing status
         }
       });
     } else {
       createMutation.mutate({
-        name: formData.name,
-        description: formData.description,
-        price: formData.price,
-        category: formData.category,
-        availableQuantity: formData.availableQuantity,
-        unit: formData.unit,
+        ...submitData,
         certificationStatus: 'Pending',
         image: formData.image || undefined,
       });
@@ -80,9 +79,9 @@ export default function ProductManagement() {
     setFormData({
       name: '',
       description: '',
-      price: 0,
+      price: '',
       category: '',
-      availableQuantity: 0,
+      availableQuantity: '',
       unit: 'kg',
       image: null,
     });
@@ -99,9 +98,9 @@ export default function ProductManagement() {
     setFormData({
       name: productToEdit.name,
       description: productToEdit.description || '',
-      price: productToEdit.price,
+      price: productToEdit.price.toString(),
       category: productToEdit.category,
-      availableQuantity: productToEdit.availableQuantity,
+      availableQuantity: productToEdit.availableQuantity.toString(),
       unit: productToEdit.unit || 'kg',
       image: null, // Can't pre-fill file input
     });
@@ -177,107 +176,114 @@ export default function ProductManagement() {
       </div>
 
       {showAddForm && (
-        <div className="bg-white rounded-lg shadow-lg border border-gray-100 p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-gray-900 rounded-lg border border-gray-700 p-6 mb-6">
+          <h2 className="text-xl font-semibold text-white mb-6">
             {editingProduct ? 'প্রোডাক্ট এডিট করুন' : 'নতুন প্রোডাক্ট যোগ করুন'}
           </h2>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">প্রোডাক্টের নাম</label>
+              <label className="block text-sm font-medium text-gray-200 mb-2">প্রোডাক্টের নাম</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400"
                 required
                 placeholder="উদাহরণ: টমেটো"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">ক্যাটাগরি</label>
+              <label className="block text-sm font-medium text-gray-200 mb-2">ক্যাটাগরি</label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white"
                 required
               >
-                <option value="">ক্যাটাগরি সিলেক্ট করুন</option>
-                <option value="Vegetables">সবজি</option>
-                <option value="Fruits">ফল</option>
-                <option value="Seeds">বীজ</option>
-                <option value="Tools">টুলস</option>
+                <option value="" className="bg-gray-800">ক্যাটাগরি সিলেক্ট করুন</option>
+                <option value="Vegetables" className="bg-gray-800">সবজি</option>
+                <option value="Fruits" className="bg-gray-800">ফল</option>
+                <option value="Seeds" className="bg-gray-800">বীজ</option>
+                <option value="Tools" className="bg-gray-800">টুলস</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">দাম (টাকা)</label>
+              <label className="block text-sm font-medium text-gray-200 mb-2">দাম (টাকা)</label>
               <input
                 type="number"
                 step="0.01"
                 value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400"
                 required
                 placeholder="100"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">পরিমাণ</label>
+              <label className="block text-sm font-medium text-gray-200 mb-2">পরিমাণ</label>
               <input
                 type="number"
                 value={formData.availableQuantity}
-                onChange={(e) => setFormData({ ...formData, availableQuantity: parseInt(e.target.value) })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                onChange={(e) => setFormData({ ...formData, availableQuantity: e.target.value })}
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white placeholder-gray-400"
                 required
                 placeholder="50"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">ইউনিট</label>
+              <label className="block text-sm font-medium text-gray-200 mb-2">ইউনিট</label>
               <select
                 value={formData.unit}
                 onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-white"
                 required
               >
-                <option value="kg">কেজি</option>
-                <option value="piece">পিস</option>
-                <option value="dozen">ডজন</option>
-                <option value="gram">গ্রাম</option>
-                <option value="liter">লিটার</option>
+                <option value="kg" className="bg-gray-800">কেজি</option>
+                <option value="piece" className="bg-gray-800">পিস</option>
+                <option value="dozen" className="bg-gray-800">ডজন</option>
+                <option value="gram" className="bg-gray-800">গ্রাম</option>
+                <option value="liter" className="bg-gray-800">লিটার</option>
               </select>
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-800 mb-2">বর্ণনা</label>
+              <label className="block text-sm font-medium text-gray-200 mb-2">বর্ণনা</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors resize-none"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors resize-none text-white placeholder-gray-400"
                 rows={3}
                 placeholder="প্রোডাক্ট সম্পর্কে বিস্তারিত লিখুন"
               />
             </div>
             {!editingProduct && (
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-800 mb-2">প্রোডাক্টের ছবি</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
-                />
-                <p className="text-sm text-gray-600 mt-1">ঐচ্ছিক: প্রোডাক্টের ছবি আপলোড করুন (সর্বোচ্চ 5MB)</p>
+                <label className="block text-sm font-medium text-gray-200 mb-2">প্রোডাক্টের ছবি</label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-600 file:text-white hover:file:bg-green-700"
+                  />
+                </div>
+                <p className="text-sm text-gray-400 mt-1">ঐচ্ছিক: প্রোডাক্টের ছবি আপলোড করুন (সর্বোচ্চ 5MB)</p>
+                {formData.image && (
+                  <div className="mt-2 p-2 bg-gray-800 border border-gray-600 rounded-lg">
+                    <p className="text-sm text-green-400">📁 {formData.image.name}</p>
+                  </div>
+                )}
               </div>
             )}
             {editingProduct && editingProduct.image && (
               <div className="md:col-span-2">
-                <label className="block text-sm font-semibold text-gray-800 mb-2">বর্তমান ছবি</label>
-                <div className="flex items-center gap-4">
+                <label className="block text-sm font-medium text-gray-200 mb-2">বর্তমান ছবি</label>
+                <div className="flex items-center gap-4 p-3 bg-gray-800 border border-gray-600 rounded-lg">
                   <img
                     src={editingProduct.image}
                     alt={editingProduct.name}
-                    className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                    className="w-16 h-16 object-cover rounded-lg border border-gray-600"
                   />
-                  <p className="text-sm text-gray-600">ছবি পরিবর্তন করার জন্য API এর মাধ্যমে আপডেট করুন</p>
+                  <p className="text-sm text-gray-400">ছবি পরিবর্তন করার জন্য নতুন ফাইল সিলেক্ট করুন</p>
                 </div>
               </div>
             )}
@@ -288,7 +294,7 @@ export default function ProductManagement() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+                className="px-6 py-3 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors font-semibold border border-gray-600"
               >
                 বাতিল
               </button>
@@ -297,7 +303,7 @@ export default function ProductManagement() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
+      <div className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
         <DataTable
           data={products}
           onEdit={handleEdit}

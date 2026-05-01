@@ -72,8 +72,12 @@ export default function RentalsPage() {
       // Confirm payment (this would typically be done after successful payment)
       await api.confirmPayment(paymentIntent.client_secret);
 
-      // Now book the rental space
-      await api.bookRentalSpace(space.id.toString());
+      // Now create rental order
+      await api.createRentalOrder({
+        spaceId: space.id,
+        totalPrice: space.price,
+        duration: 1, // Default to 1 month
+      });
       toast.success('রেন্টাল স্পেস সফলভাবে বুক করা হয়েছে!');
       setSpaces(prev => prev.map(s => s.id === space.id ? {...s, availability: false} : s));
     } catch (err: any) {
@@ -168,15 +172,24 @@ export default function RentalsPage() {
                     {space.availability ? '✅ অভ্যন্তরীণ' : '❌ বুক করা'}
                   </span>
                 </div>
-                {space.availability && (
-                  <button
-                    onClick={() => handleBookSpace(space)}
-                    disabled={bookingLoading === space.id.toString()}
-                    className="w-full py-3 bg-gradient-to-r from-[#00FF00] to-[#39FF14] text-black rounded-xl hover:from-[#39FF14] hover:to-[#00FF41] transition-all duration-200 shadow-md hover:shadow-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-[#00FF00]/50 hover:shadow-[#39FF14]/70"
+
+                <div className="flex gap-2">
+                  <Link
+                    href={`/rentals/${space.id}`}
+                    className="flex-1 py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium text-center text-sm"
                   >
-                    {bookingLoading === space.id.toString() ? 'পেমেন্ট প্রসেস হচ্ছে...' : '💳 বুক করুন (পেমেন্ট সহ)'}
-                  </button>
-                )}
+                    👁️ বিস্তারিত দেখুন
+                  </Link>
+                  {space.availability && (
+                    <button
+                      onClick={() => handleBookSpace(space)}
+                      disabled={bookingLoading === space.id.toString()}
+                      className="flex-1 py-2 px-4 bg-gradient-to-r from-[#00FF00] to-[#39FF14] text-black rounded-lg hover:from-[#39FF14] hover:to-[#00FF41] transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      {bookingLoading === space.id.toString() ? 'পেমেন্ট...' : '💳 বুক করুন'}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

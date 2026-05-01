@@ -24,6 +24,23 @@ export interface Produce {
   unit?: string;
   createdAt: string;
   updatedAt: string;
+  vendor?: {
+    user: {
+      name: string;
+    };
+    farmName: string;
+    sustainabilityCerts: Array<{
+      certifyingAgency: string;
+      certificationDate: string;
+    }>;
+  };
+}
+
+export interface PlantHealth {
+  health?: string;
+  age?: string;
+  growth?: string;
+  condition?: string;
 }
 
 export interface RentalSpace {
@@ -99,7 +116,7 @@ export interface CustomerPost {
   comments?: PostComment[];
 }
 
-export interface SustainabilityTip {
+export interface SustainabilityCertificate {
   id: number;
   title: string;
   description: string;
@@ -115,6 +132,14 @@ export interface Order {
   createdAt: string;
   items?: any[];
   produce?: Produce;
+}
+
+export interface ChatMessage {
+  id: string;
+  userId: string;
+  message: string;
+  isBot: boolean;
+  timestamp: string;
 }
 
 export interface User {
@@ -390,6 +415,10 @@ const api = {
     return Array.isArray(data.data) ? data.data : [];
   },
 
+  createRentalOrder: async (rentalData: { spaceId: number; totalPrice: number; duration?: number }) => {
+    return apiClient.post('/rentals/order', rentalData);
+  },
+
   bookRentalSpace: async (spaceId: string) => {
     return apiClient.post('/rentals/book', { spaceId });
   },
@@ -417,9 +446,9 @@ const api = {
     return apiClient.delete(`/community/posts/${id}`);
   },
 
-  // Sustainability (corrected endpoint - using certs instead of tips)
-  getSustainabilityCerts: async (): Promise<SustainabilityTip[]> => {
-    const data = await apiClient.get<ApiResponse<SustainabilityTip[]>>('/sustainability/certs');
+  // Sustainability Certificates
+  getSustainabilityCerts: async (): Promise<SustainabilityCertificate[]> => {
+    const data = await apiClient.get<ApiResponse<SustainabilityCertificate[]>>('/sustainability/certs');
     return Array.isArray(data.data) ? data.data : [];
   },
 
@@ -940,6 +969,21 @@ const api = {
 
   markAllNotificationsAsRead: async () => {
     const data = await apiClient.patch<ApiResponse<any>>('/notifications/mark-all-read');
+    return data.data;
+  },
+
+  // Chat APIs
+  sendChatMessage: async (messageData: { userId: string; message: string }) => {
+    return apiClient.post('/chat/send', messageData);
+  },
+
+  getChatMessages: async (userId: string): Promise<ChatMessage[]> => {
+    const data = await apiClient.get<ApiResponse<ChatMessage[]>>(`/chat/messages/${userId}`);
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  handleChatMessage: async (messageData: { userId: string; message: string }): Promise<ChatMessage> => {
+    const data = await apiClient.post<ApiResponse<ChatMessage>>('/chat/handle', messageData);
     return data.data;
   },
 };

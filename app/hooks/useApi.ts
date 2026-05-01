@@ -1,6 +1,6 @@
 // Data fetching hooks using React Query for better state management
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api, { ApiError } from '../lib/api';
+import api, { ApiError, ChatMessage } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -264,6 +264,37 @@ export const useCreateOrder = () => {
   });
 };
 
+export const useCreateRentalOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (rentalData: { spaceId: number; totalPrice: number; duration?: number }) =>
+      api.createRentalOrder(rentalData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.rentalSpaces });
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders });
+      toast.success('Rental order created successfully!');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to create rental order');
+    },
+  });
+};
+
+export const useBookRentalSpace = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (spaceId: string) => api.bookRentalSpace(spaceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.rentalSpaces });
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders });
+      toast.success('Rental space booked successfully!');
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to book rental space');
+    },
+  });
+};
+
 export const useUpdateUserStatus = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -342,6 +373,15 @@ export const useDashboardStats = () => {
     queryKey: ['admin-dashboard-stats'],
     queryFn: () => api.getDashboardStats(),
     enabled: !!isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+// Sustainability APIs
+export const useSustainabilityCerts = () => {
+  return useQuery({
+    queryKey: ['sustainability-certs'],
+    queryFn: () => api.getSustainabilityCerts(),
     staleTime: 5 * 60 * 1000,
   });
 };
@@ -806,6 +846,33 @@ export const useDeleteComment = () => {
     },
     onError: (error: ApiError) => {
       toast.error(error.message || 'Failed to delete comment');
+    },
+  });
+};
+
+// Chat Hooks
+export const useChatMessages = (userId: string) => {
+  return useQuery({
+    queryKey: ['chat-messages', userId],
+    queryFn: () => api.getChatMessages(userId),
+    enabled: !!userId,
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+};
+
+export const useHandleChatMessage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (messageData: { userId: string; message: string }) =>
+      api.handleChatMessage(messageData),
+    onSuccess: (data, variables) => {
+      // Invalidate chat messages for the user
+      queryClient.invalidateQueries({
+        queryKey: ['chat-messages', variables.userId]
+      });
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to send message');
     },
   });
 };

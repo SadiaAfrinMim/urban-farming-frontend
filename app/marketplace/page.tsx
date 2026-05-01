@@ -102,7 +102,7 @@ export default function MarketplacePage() {
 
       const orderData = {
         produceId: productId, // Send as number
-        quantity: 1, // Default to 1 for now
+        quantity: 1, // Default to 1 portion for marketplace quick buy
         totalPrice: orderAmount,
       };
 
@@ -262,6 +262,15 @@ export default function MarketplacePage() {
                       <div className="absolute top-3 left-3 bg-[#39FF14]/20 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-[#39FF14]">
                         {product.category || 'পণ্য'}
                       </div>
+
+                      {/* Sustainability Badge */}
+                      {product.vendor?.sustainabilityCerts && product.vendor.sustainabilityCerts.length > 0 && (
+                        <div className="absolute top-12 left-3 bg-green-900/80 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-green-300 flex items-center gap-1">
+                          <span className="text-green-400">🌱</span>
+                          টেকসই ({product.vendor.sustainabilityCerts.length})
+                        </div>
+                      )}
+
                       <div className="absolute top-3 right-3 bg-[#39FF14] text-black px-2 py-1 rounded-full text-xs font-medium">
                         {product.certificationStatus === 'Approved' ? '✅ অনুমোদিত' : '⏳ অপেক্ষমান'}
                       </div>
@@ -271,6 +280,34 @@ export default function MarketplacePage() {
                       <p className="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
                         {product.description || 'কোনো বিবরণ নেই'}
                       </p>
+
+                      {/* Sustainability Information */}
+                      {product.vendor?.sustainabilityCerts && product.vendor.sustainabilityCerts.length > 0 && (
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-green-400 text-sm font-medium">🌱 টেকসই প্রমাণপত্র</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {product.vendor.sustainabilityCerts.map((cert, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center gap-1 bg-green-900/30 text-green-300 text-xs px-2 py-1 rounded-full border border-green-700"
+                                title={`প্রমাণকারী সংস্থা: ${cert.certifyingAgency} (${new Date(cert.certificationDate).getFullYear()})`}
+                              >
+                                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                                {cert.certifyingAgency}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Vendor Information */}
+                      {product.vendor && (
+                        <div className="mb-4 text-sm text-gray-400">
+                          <span>ফার্ম: <span className="text-[#39FF14]">{product.vendor.farmName}</span></span>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center mb-4">
                         <div className="flex flex-col">
                           <span className="text-2xl font-bold text-[#39FF14]">

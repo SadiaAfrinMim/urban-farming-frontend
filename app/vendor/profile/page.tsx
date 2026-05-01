@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { StatusBadge } from '../../components/StatusBadge';
-import { useVendorProfile, useUpdateVendorProfile } from '../../hooks/useApi';
+import { useVendorProfile, useUpdateVendorProfile, useSustainabilityCerts } from '../../hooks/useApi';
 import { Card, Button, Input, Alert, LoadingSpinner } from '../../components/ui';
 import ProfileImage from '../../components/ProfileImage';
 import toast from 'react-hot-toast';
 
 export default function VendorProfile() {
   const { data: profile, isLoading, error, refetch } = useVendorProfile();
+  const { data: sustainabilityCerts, isLoading: certsLoading } = useSustainabilityCerts();
   const updateProfileMutation = useUpdateVendorProfile();
 
   const [editing, setEditing] = useState(false);
@@ -400,6 +401,46 @@ export default function VendorProfile() {
               </div>
             )}
           </div>
+        </Card>
+
+        {/* Sustainability Certificates Section */}
+        <Card>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">🌱 সাস্টেইনেবিলিটি সার্টিফিকেটস</h2>
+
+          {certsLoading ? (
+            <div className="flex justify-center py-8">
+              <LoadingSpinner size="md" />
+            </div>
+          ) : sustainabilityCerts && sustainabilityCerts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sustainabilityCerts.map((cert) => (
+                <div key={cert.id} className="bg-green-50 rounded-lg p-4 border border-green-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="flex-shrink-0">
+                      <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-semibold text-green-800 truncate">{cert.title}</h4>
+                      <p className="text-xs text-green-600">{cert.category}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-green-700 mb-3">{cert.description}</p>
+                  <div className="flex items-center justify-between text-xs text-green-600">
+                    <span>সার্টিফাইড</span>
+                    <span className="font-medium">✓</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-4">🌱</div>
+              <div className="text-gray-600 text-lg font-medium">কোনো সাস্টেইনেবিলিটি সার্টিফিকেট পাওয়া যায়নি</div>
+              <div className="text-gray-500 text-sm mt-2">সার্টিফিকেট যোগ করার জন্য অ্যাডমিনের সাথে যোগাযোগ করুন</div>
+            </div>
+          )}
         </Card>
       </div>
     </div>

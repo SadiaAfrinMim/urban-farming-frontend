@@ -95,14 +95,14 @@ export default function PlantTracking() {
 
   return (
     <div className="max-w-4xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">Plant Tracking</h1>
+      <h1 className="text-3xl font-bold mb-8 text-white">Plant Tracking</h1>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Select a Rented Plot to Update</h2>
+      <div className="bg-gray-900 rounded-lg shadow p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4 text-white">Select a Rented Plot to Update</h2>
         <select
           value={selectedSpace}
           onChange={(e) => setSelectedSpace(e.target.value)}
-          className="w-full p-2 border rounded mb-4"
+          className="w-full p-2 border border-gray-600 bg-gray-800 text-white rounded mb-4"
         >
           <option value="">Choose a plot...</option>
           {spaces.map((space) => (
@@ -115,11 +115,11 @@ export default function PlantTracking() {
         {selectedSpace && (
           <form onSubmit={handleUpdate} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Plant Status</label>
+              <label className="block text-sm font-medium mb-2 text-white">Plant Status</label>
               <select
                 value={updateData.plantStatus}
                 onChange={(e) => setUpdateData({ ...updateData, plantStatus: e.target.value })}
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border border-gray-600 bg-gray-800 text-white rounded"
                 required
               >
                 <option value="">Select status...</option>
@@ -133,32 +133,32 @@ export default function PlantTracking() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Last Watered Date</label>
+              <label className="block text-sm font-medium mb-2 text-white">Last Watered Date</label>
               <input
                 type="date"
                 value={updateData.lastWatered}
                 onChange={(e) => setUpdateData({ ...updateData, lastWatered: e.target.value })}
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border border-gray-600 bg-gray-800 text-white rounded"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Quick Photo</label>
+              <label className="block text-sm font-medium mb-2 text-white">Quick Photo</label>
               <input
                 type="file"
                 onChange={handleFileChange}
                 accept="image/*"
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border border-gray-600 bg-gray-800 text-white rounded"
               />
-              <p className="text-sm text-gray-500 mt-1">Upload a photo of the current plant status</p>
+              <p className="text-sm text-gray-300 mt-1">Upload a photo of the current plant status</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Notes for Customer</label>
+              <label className="block text-sm font-medium mb-2 text-white">Notes for Customer</label>
               <textarea
                 value={updateData.note}
                 onChange={(e) => setUpdateData({ ...updateData, note: e.target.value })}
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border border-gray-600 bg-gray-800 text-white rounded"
                 rows={3}
                 placeholder="Any special tips or updates for the customer..."
               />
@@ -166,7 +166,7 @@ export default function PlantTracking() {
 
             <button
               type="submit"
-              className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              className="px-6 py-2 bg-green-400 text-white rounded hover:bg-green-500"
             >
               Update Plant Status
             </button>
@@ -174,18 +174,18 @@ export default function PlantTracking() {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Current Plant Status Overview</h2>
+      <div className="bg-gray-900 rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-4 text-white">Current Plant Status Overview</h2>
         <div className="space-y-4">
           {spaces.map((space) => (
-            <div key={space.id} className="flex justify-between items-center p-4 border rounded">
+            <div key={space.id} className="flex justify-between items-center p-4 border border-gray-600 bg-gray-800 rounded">
               <div>
-                <h3 className="font-medium">{space.location}</h3>
-                <p className="text-sm text-gray-600">Rented by: {space.rentedBy}</p>
+                <h3 className="font-medium text-white">{space.location}</h3>
+                <p className="text-sm text-gray-300">Rented by: {space.rentedBy}</p>
               </div>
               <div className="text-right">
-                <p className="font-medium">{space.plantStatus}</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-medium text-white">{space.plantStatus}</p>
+                <p className="text-sm text-gray-300">
                   Last watered: {space.lastWatered ? (() => {
                     try {
                       const date = new Date(space.lastWatered);
