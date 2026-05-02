@@ -1,11 +1,12 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRentalSpace, useCreateOrder } from '../../hooks/useApi';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { io, Socket } from 'socket.io-client';
 
 interface PageProps {
   params: {
@@ -20,6 +21,125 @@ export default function RentalDetailPage({ params }: PageProps) {
   const { data: rentalSpace, isLoading, error } = useRentalSpace(resolvedParams.id);
   const createOrderMutation = useCreateOrder();
   const [quantity, setQuantity] = useState(1);
+  const [otherRentals, setOtherRentals] = useState([]);
+  const [vendorProducts, setVendorProducts] = useState([]);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [liveUpdates, setLiveUpdates] = useState<string[]>([]);
+  const [currentRentalSpace, setCurrentRentalSpace] = useState(rentalSpace);
+
+  useEffect(() => {
+    if (rentalSpace) {
+      setCurrentRentalSpace(rentalSpace);
+
+      const fetchRelatedData = async () => {
+        try {
+          // Fetch other rentals
+          const allRentals = await api.getRentalSpaces();
+          const filteredRentals = allRentals.filter(r => r.vendorId === rentalSpace.vendorId && r.id !== rentalSpace.id);
+          setOtherRentals(filteredRentals);
+
+          // Fetch products from same vendor
+          const allProducts = await api.getProduces();
+          const filteredProducts = allProducts.filter(p => p.vendor?.id === rentalSpace.vendorId);
+          setVendorProducts(filteredProducts);
+        } catch (error) {
+          console.error('Failed to fetch related data:', error);
+        }
+      };
+      fetchRelatedData();
+    }
+  }, [rentalSpace]);
+
+  // Real-time updates socket connection
+  useEffect(() => {
+    if (rentalSpace) {
+      // Connect to WebSocket server
+      const socketConnection = io('https://urban-farming-backend-pink.vercel.app', {
+        transports: ['websocket', 'polling'],
+      });
+
+      socketConnection.on('connect', () => {
+        console.log('RentalDetailPage: Connected to WebSocket server');
+        setLiveUpdates(prev => [...prev, '🔗 রিয়েল-টাইম আপডেট সংযোগ স্থাপিত']);
+      });
+
+      socketConnection.on('disconnect', () => {
+        console.log('RentalDetailPage: Disconnected from WebSocket server');
+        setLiveUpdates(prev => [...prev, '🔌 সংযোগ বিচ্ছিন্ন']);
+      });
+
+      // Listen for rental space updates
+      socketConnection.on('rental-space-updated', (updatedSpace: any) => {
+        if (updatedSpace.id === rentalSpace.id) {
+          console.log('RentalDetailPage: Rental space updated:', updatedSpace);
+          setCurrentRentalSpace(updatedSpace);
+
+          // Add to live updates
+          const updateMessage = `🔄 রেন্টাল স্পেস আপডেট হয়েছে: ${updatedSpace.location}`;
+          setLiveUpdates(prev => [updateMessage, ...prev.slice(0, 4)]); // Keep last 5 updates
+
+          toast.success('রেন্টাল স্পেস আপডেট হয়েছে!');
+        }
+      });
+
+      // Listen for rental space availability changes
+      socketConnection.on('rental-space-availability-changed', (updatedSpace: any) => {
+        if (updatedSpace.id === rentalSpace.id) {
+          console.log('RentalDetailPage: Availability changed:', updatedSpace);
+          setCurrentRentalSpace(updatedSpace);
+
+          const availabilityMessage = updatedSpace.availability
+            ? '✅ রেন্টাল স্পেস এখন উপলব্ধ'
+            : '❌ রেন্টাল স্পেস বুক হয়েছে';
+          setLiveUpdates(prev => [availabilityMessage, ...prev.slice(0, 4)]);
+
+          toast.info(availabilityMessage);
+        }
+      });
+
+      // Listen for plant status updates
+      socketConnection.on('plant-status-updated', (updateData: any) => {
+        if (updateData.rentalSpaceId === rentalSpace.id) {
+          console.log('RentalDetailPage: Plant status updated:', updateData);
+
+          const statusMessage = `🌱 গাছের অবস্থা আপডেট: ${updateData.status}`;
+          setLiveUpdates(prev => [statusMessage, ...prev.slice(0, 4)]);
+
+          toast.info('গাছের অবস্থা আপডেট হয়েছে');
+        }
+      });
+
+      // Listen for watering updates
+      socketConnection.on('watering-completed', (updateData: any) => {
+        if (updateData.rentalSpaceId === rentalSpace.id) {
+          console.log('RentalDetailPage: Watering completed:', updateData);
+
+          const waterMessage = `💧 পানি দেওয়া হয়েছে - ${new Date().toLocaleTimeString('bn-BD')}`;
+          setLiveUpdates(prev => [waterMessage, ...prev.slice(0, 4)]);
+
+          toast.info('পানি দেওয়া সম্পন্ন!');
+        }
+      });
+
+      // Listen for vendor messages/updates
+      socketConnection.on('vendor-update', (updateData: any) => {
+        if (updateData.rentalSpaceId === rentalSpace.id) {
+          console.log('RentalDetailPage: Vendor update:', updateData);
+
+          const vendorMessage = `👨‍🌾 ভেন্ডর আপডেট: ${updateData.message}`;
+          setLiveUpdates(prev => [vendorMessage, ...prev.slice(0, 4)]);
+
+          toast.info(updateData.message);
+        }
+      });
+
+      setSocket(socketConnection);
+
+      return () => {
+        socketConnection.disconnect();
+      };
+    }
+  }, [rentalSpace]);
 
   const handleBookRental = async () => {
     if (!isAuthenticated || !user) {
@@ -162,11 +282,11 @@ export default function RentalDetailPage({ params }: PageProps) {
 
             {/* Rental Space Details */}
             <div className="md:w-1/2 p-8">
-              <h1 className="text-3xl font-bold text-[#39FF14] mb-4">{rentalSpace.location}</h1>
+              <h1 className="text-3xl font-bold text-[#39FF14] mb-4">{currentRentalSpace?.location || rentalSpace.location}</h1>
 
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl font-bold text-[#39FF14]">৳ {rentalSpace.price}</span>
+                  <span className="text-2xl font-bold text-[#39FF14]">৳ {currentRentalSpace?.price || rentalSpace.price}</span>
                   <span className="text-sm text-gray-400">প্রতি মাস</span>
                 </div>
 
@@ -192,7 +312,7 @@ export default function RentalDetailPage({ params }: PageProps) {
                     </div>
                   </div>
                   <div className="text-sm text-gray-400">
-                    মোট মূল্য: <span className="text-[#39FF14] font-semibold">৳ {rentalSpace.price * quantity}</span>
+                    মোট মূল্য: <span className="text-[#39FF14] font-semibold">৳ {(currentRentalSpace?.price || rentalSpace.price) * quantity}</span>
                   </div>
                 </div>
                 <div className="text-sm text-gray-400 mb-2">
@@ -239,32 +359,127 @@ export default function RentalDetailPage({ params }: PageProps) {
                 </div>
               </div>
 
-              {rentalSpace.plantStatus && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-300 mb-3">গাছের অবস্থা</h3>
-                  <div className="bg-gray-800 rounded-lg p-4 space-y-2">
-                    <p><strong className="text-gray-300">স্বাস্থ্য:</strong> <span className="text-green-400">{rentalSpace.plantStatus.health || 'অজানা'}</span></p>
-                    <p><strong className="text-gray-300">বয়স:</strong> <span className="text-blue-400">{rentalSpace.plantStatus.age || 'অজানা'}</span></p>
-                    {rentalSpace.plantStatus.growth && (
-                      <p><strong className="text-gray-300">বৃদ্ধি:</strong> <span className="text-yellow-400">{rentalSpace.plantStatus.growth}</span></p>
-                    )}
-                    {rentalSpace.plantStatus.condition && (
-                      <p><strong className="text-gray-300">অবস্থা:</strong> <span className="text-purple-400">{rentalSpace.plantStatus.condition}</span></p>
-                    )}
-                    <p><strong className="text-gray-300">শেষ পানি দেওয়া:</strong> <span className="text-cyan-400">{rentalSpace.lastWatered ? new Date(rentalSpace.lastWatered).toLocaleDateString('bn-BD') : 'অজানা'}</span></p>
+              {/* Real-Time Plant Tracking Dashboard */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+                  🌱 রিয়েল-টাইম গাছ ট্র্যাকিং
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                </h3>
+
+                {/* Plant Health Overview */}
+                <div className="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">
+                        {(currentRentalSpace?.plantStatus || rentalSpace.plantStatus)?.health === 'Healthy' ? '🟢' :
+                         (currentRentalSpace?.plantStatus || rentalSpace.plantStatus)?.health === 'Good' ? '🟡' :
+                         (currentRentalSpace?.plantStatus || rentalSpace.plantStatus)?.health === 'Poor' ? '🔴' : '⚪'}
+                      </div>
+                      <div className="text-xs text-gray-400">স্বাস্থ্য</div>
+                      <div className={`text-sm font-medium ${
+                        (currentRentalSpace?.plantStatus || rentalSpace.plantStatus)?.health === 'Healthy' ? 'text-green-400' :
+                        (currentRentalSpace?.plantStatus || rentalSpace.plantStatus)?.health === 'Good' ? 'text-yellow-400' :
+                        (currentRentalSpace?.plantStatus || rentalSpace.plantStatus)?.health === 'Poor' ? 'text-red-400' : 'text-gray-400'
+                      }`}>
+                        {(currentRentalSpace?.plantStatus || rentalSpace.plantStatus)?.health || 'অজানা'}
+                      </div>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">🌿</div>
+                      <div className="text-xs text-gray-400">বয়স</div>
+                      <div className="text-sm font-medium text-blue-400">
+                        {(currentRentalSpace?.plantStatus || rentalSpace.plantStatus)?.age || 'অজানা'}
+                      </div>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">📈</div>
+                      <div className="text-xs text-gray-400">বৃদ্ধি</div>
+                      <div className="text-sm font-medium text-purple-400">
+                        {(currentRentalSpace?.plantStatus || rentalSpace.plantStatus)?.growth || 'অজানা'}
+                      </div>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">💧</div>
+                      <div className="text-xs text-gray-400">শেষ পানি</div>
+                      <div className="text-sm font-medium text-cyan-400">
+                        {(currentRentalSpace?.lastWatered || rentalSpace.lastWatered) ?
+                          new Date(currentRentalSpace?.lastWatered || rentalSpace.lastWatered).toLocaleDateString('bn-BD') :
+                          'অজানা'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Watering Schedule */}
+                  <div className="border-t border-gray-700 pt-4">
+                    <h4 className="text-sm font-medium text-gray-300 mb-2">পানি দেওয়ার সময়সূচি</h4>
+                    <div className="grid grid-cols-7 gap-1">
+                      {['রবি', 'সোম', 'মঙ্গল', 'বুধ', 'বৃহস্পতি', 'শুক্র', 'শনি'].map((day, index) => (
+                        <div key={day} className="text-center">
+                          <div className={`text-xs py-1 px-2 rounded ${
+                            index % 2 === 0 ? 'bg-blue-900/50 text-blue-300' : 'bg-gray-700 text-gray-400'
+                          }`}>
+                            {day}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">প্রতি ২-৩ দিনে পানি দেওয়া হয়</p>
                   </div>
                 </div>
-              )}
+
+                {/* Plant Care Instructions */}
+                <div className="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-300 mb-3">গাছের যত্ন নির্দেশনা</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h5 className="text-sm font-medium text-[#39FF14] mb-2">💧 পানি দেওয়া</h5>
+                      <ul className="text-xs text-gray-400 space-y-1">
+                        <li>• মাটি শুকিয়ে গেলে পানি দিন</li>
+                        <li>• অতিরিক্ত পানি এড়িয়ে চলুন</li>
+                        <li>• সকাল বা সন্ধ্যায় পানি দিন</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-medium text-[#39FF14] mb-2">☀️ আলো এবং তাপমাত্রা</h5>
+                      <ul className="text-xs text-gray-400 space-y-1">
+                        <li>• দৈনিক ৬-৮ ঘণ্টা সূর্যালোক</li>
+                        <li>• তাপমাত্রা: ২০-৩০°C</li>
+                        <li>• সরাসরি রোদ এড়িয়ে চলুন</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Plant Growth Photos */}
+                <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                  <h4 className="text-sm font-medium text-gray-300 mb-3">গাছের বৃদ্ধি ফটো</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="aspect-square bg-gradient-to-br from-green-900 to-green-700 rounded-lg flex items-center justify-center">
+                      <span className="text-2xl">🌱</span>
+                    </div>
+                    <div className="aspect-square bg-gradient-to-br from-green-800 to-green-600 rounded-lg flex items-center justify-center">
+                      <span className="text-2xl">🌿</span>
+                    </div>
+                    <div className="aspect-square bg-gradient-to-br from-green-700 to-green-500 rounded-lg flex items-center justify-center">
+                      <span className="text-2xl">🌳</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">ভেন্ডর নিয়মিত ফটো আপডেট করে</p>
+                </div>
+              </div>
 
               {/* Book Button */}
               <div className="flex gap-4">
                 <button
                   onClick={handleBookRental}
-                  disabled={!rentalSpace.availability}
+                  disabled={!(currentRentalSpace?.availability ?? rentalSpace.availability)}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-[#39FF14] to-[#28CC0C] text-black text-lg font-semibold rounded-xl hover:from-[#28CC0C] hover:to-[#39FF14] disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-md"
                 >
-                  {rentalSpace.availability
-                    ? `বুক করুন (${quantity} মাস) - ৳ ${rentalSpace.price * quantity}`
+                  {(currentRentalSpace?.availability ?? rentalSpace.availability)
+                    ? `বুক করুন (${quantity} মাস) - ৳ ${(currentRentalSpace?.price || rentalSpace.price) * quantity}`
                     : 'উপলব্ধ নয়'
                   }
                 </button>
@@ -283,6 +498,153 @@ export default function RentalDetailPage({ params }: PageProps) {
             </div>
           </div>
         </div>
+
+        {/* Live Updates Section */}
+        <div className="mt-12 bg-gray-900 rounded-2xl p-6 border border-gray-700">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+            <h3 className="text-xl font-bold text-[#39FF14]">রিয়েল-টাইম আপডেট</h3>
+            <span className="text-sm text-gray-400 bg-gray-800 px-2 py-1 rounded-full">
+              লাইভ
+            </span>
+          </div>
+
+          {liveUpdates.length > 0 ? (
+            <div className="space-y-3 max-h-60 overflow-y-auto">
+              {liveUpdates.map((update, index) => (
+                <div key={index} className="flex items-start gap-3 p-3 bg-gray-800 rounded-lg border border-gray-600">
+                  <div className="text-sm mt-0.5">🔔</div>
+                  <div className="flex-1">
+                    <p className="text-gray-200 text-sm">{update}</p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      {new Date().toLocaleTimeString('bn-BD')}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-2">📡</div>
+              <p className="text-gray-400 text-sm">রিয়েল-টাইম আপডেটের জন্য অপেক্ষা করুন...</p>
+              <p className="text-gray-500 text-xs mt-1">ভেন্ডর কোনো আপডেট করলে এখানে দেখাবে</p>
+            </div>
+          )}
+
+          <div className="mt-4 p-3 bg-blue-900/30 border border-blue-700/50 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-blue-400">ℹ️</span>
+              <span className="text-blue-300 text-sm font-medium">কী ধরনের আপডেট দেখবেন:</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-blue-200">
+              <div>• রেন্টাল স্পেস তথ্য পরিবর্তন</div>
+              <div>• উপলব্ধতা স্ট্যাটাস আপডেট</div>
+              <div>• গাছের অবস্থা পরিবর্তন</div>
+              <div>• পানি দেওয়ার তথ্য</div>
+              <div>• ভেন্ডরের বার্তা এবং নোটিফিকেশন</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Other Rentals from Same Vendor */}
+        {otherRentals.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold text-[#39FF14] mb-8">এই ভেন্ডরের অন্যান্য রেন্টাল স্পেস</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {otherRentals.map((space) => (
+                <Link key={space.id} href={`/rentals/${space.id}`}>
+                  <div className="bg-gray-900 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-700 cursor-pointer">
+                    <div className="relative h-48 bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center overflow-hidden">
+                      {space.image ? (
+                        <img
+                          src={space.image.startsWith('http') ? space.image : `https://urban-farming-backend-pink.vercel.app${space.image}`}
+                          alt={space.location}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-4xl">🌱</span>
+                          <span className="text-gray-400 font-medium">ছবি নেই</span>
+                        </div>
+                      )}
+                      <div className="absolute top-3 left-3 bg-[#39FF14]/20 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-[#39FF14]">
+                        {space.size}
+                      </div>
+                      <div className={`absolute top-3 right-3 text-black px-2 py-1 rounded-full text-xs font-medium ${
+                        space.availability ? 'bg-[#39FF14]' : 'bg-gray-400'
+                      }`}>
+                        {space.availability ? '✅ উপলব্ধ' : '❌ বুক করা হয়েছে'}
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg text-[#39FF14] mb-2">{space.location}</h3>
+                      <div className="flex justify-between items-center">
+                        <div className="text-xl font-bold text-[#39FF14]">
+                          ৳ {space.price}
+                        </div>
+                        <span className="text-sm text-gray-400">প্রতি মাস</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Products from Same Vendor */}
+        {vendorProducts.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold text-[#39FF14] mb-8">এই ভেন্ডরের পণ্য</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {vendorProducts.map((product) => (
+                <Link key={product.id} href={`/products/${product.id}`}>
+                  <div className="bg-gray-900 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-700 cursor-pointer">
+                    <div className="relative h-48 bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center overflow-hidden">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.parentElement?.querySelector('.fallback') as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div className="fallback flex flex-col items-center gap-2" style={{ display: product.image ? 'none' : 'flex' }}>
+                        <span className="text-4xl">🥕</span>
+                        <span className="text-gray-400 font-medium">ছবি নেই</span>
+                      </div>
+                      <div className="absolute top-3 left-3 bg-[#39FF14]/20 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-[#39FF14]">
+                        {product.category || 'পণ্য'}
+                      </div>
+                      <div className="absolute top-3 right-3 bg-[#39FF14] text-black px-2 py-1 rounded-full text-xs font-medium">
+                        {product.certificationStatus === 'Approved' ? '✅ অনুমোদিত' : '⏳ অপেক্ষমান'}
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg text-[#39FF14] mb-2">{product.name}</h3>
+                      <p className="text-gray-400 text-sm mb-4 line-clamp-2 leading-relaxed">
+                        {product.description || 'কোনো বিবরণ নেই'}
+                      </p>
+                      <div className="flex justify-between items-center">
+                        <div className="text-xl font-bold text-[#39FF14]">
+                          ৳ {product.price}
+                        </div>
+                        <span className="text-sm text-gray-400">প্রতি {product.unit || 'ইউনিট'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

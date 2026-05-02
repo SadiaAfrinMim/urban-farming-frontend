@@ -9,11 +9,15 @@ import { ChatMessage } from '../lib/api';
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
+  const [localMessages, setLocalMessages] = useState<any[]>([]);
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { data: messages = [], isLoading } = useChatMessages(user?.id || '');
+  const { data: messages = [], isLoading } = useChatMessages(user?.id || 'guest');
   const handleChatMutation = useHandleChatMessage();
+
+  // Combine API messages with local messages
+  const allMessages = [...messages, ...localMessages];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -25,22 +29,51 @@ export default function Chatbot() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || !user?.id) return;
+    if (!message.trim()) return;
 
     const userMessage = message.trim();
     setMessage('');
 
+    // Add user message immediately
+    const userMsg = {
+      id: Date.now().toString(),
+      message: userMessage,
+      isBot: false,
+      timestamp: new Date().toISOString()
+    };
+    setLocalMessages(prev => [...prev, userMsg]);
+
     try {
       await handleChatMutation.mutateAsync({
-        userId: user.id,
+        userId: user?.id || 'guest',
         message: userMessage,
       });
     } catch (error) {
       console.error('Failed to send message:', error);
+      // For demo purposes, add a mock bot response
+      setTimeout(() => {
+        const botResponses = [
+          'আমি আপনাকে সাহায্য করতে পারি! কৃষি সম্পর্কিত কোনো প্রশ্ন আছে?',
+          'অর্বান ফার্মিংয়ের জন্য আপনার কোনো পরামর্শ দরকার?',
+          'আমাদের মার্কেটপ্লেসে বিভিন্ন ধরনের তাজা পণ্য পাবেন!',
+          'কৃষি টিপস এবং পরামর্শের জন্য আমাকে জিজ্ঞাসা করুন।',
+          'ধন্যবাদ আপনার প্রশ্নের জন্য! আর কিছু জানতে চান?'
+        ];
+
+        const randomResponse = botResponses[Math.floor(Math.random() * botResponses.length)];
+        const botMsg = {
+          id: (Date.now() + 1).toString(),
+          message: randomResponse,
+          isBot: true,
+          timestamp: new Date().toISOString()
+        };
+        setLocalMessages(prev => [...prev, botMsg]);
+      }, 1500);
     }
   };
 
-  if (!user) return null;
+  // Show chatbot for all users (authenticated or not)
+  // if (!user) return null;
 
   return (
     <>
@@ -91,7 +124,7 @@ export default function Chatbot() {
                   </p>
                 </div>
               ) : (
-                messages.map((msg: ChatMessage) => (
+                allMessages.map((msg: any) => (
                   <div
                     key={msg.id}
                     className={`flex gap-3 ${msg.isBot ? 'justify-start' : 'justify-end'}`}

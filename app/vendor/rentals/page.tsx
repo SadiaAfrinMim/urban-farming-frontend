@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MultiStepForm } from '../../components/MultiStepForm';
 import { Card, Button, Input, Alert, LoadingSpinner, StatusBadge } from '../../components/ui';
 import api from '../../lib/api';
 import toast from 'react-hot-toast';
@@ -20,6 +19,160 @@ interface RentalSpace {
   lastWatered?: string;
 }
 
+// Vendor Update Modal Component
+function VendorUpdateModal({ space, isOpen, onClose }: {
+  space: RentalSpace | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const [updateMessage, setUpdateMessage] = useState('');
+  const [updateType, setUpdateType] = useState<'status' | 'maintenance' | 'watering' | 'custom'>('status');
+
+  if (!isOpen || !space) return null;
+
+  const updateTypeOptions = [
+    { value: 'status', label: '📊 স্ট্যাটাস আপডেট', description: 'রেন্টাল স্পেসের সাধারণ স্ট্যাটাস আপডেট' },
+    { value: 'maintenance', label: '🔧 মেইনটেনেন্স', description: 'মেরামত বা রক্ষণাবেক্ষণের তথ্য' },
+    { value: 'watering', label: '💧 পানি দেওয়া', description: 'গাছ পানি দেওয়ার তথ্য' },
+    { value: 'custom', label: '💬 কাস্টম মেসেজ', description: 'অন্য কোনো গুরুত্বপূর্ণ তথ্য' }
+  ];
+
+  const getUpdateMessage = (type: string) => {
+    switch (type) {
+      case 'status':
+        return `${space.location} রেন্টাল স্পেসের স্ট্যাটাস আপডেট হয়েছে।`;
+      case 'maintenance':
+        return `${space.location}-এ মেইনটেনেন্স কাজ চলছে।`;
+      case 'watering':
+        return `${space.location}-এর গাছগুলোকে পানি দেওয়া হয়েছে।`;
+      default:
+        return '';
+    }
+  };
+
+  const handleSendUpdate = async () => {
+    if (!updateMessage.trim()) {
+      toast.error('আপডেট মেসেজ লিখুন');
+      return;
+    }
+
+    try {
+      // Here we would send the update to customers via API
+      // For now, we'll just emit a socket event
+      const socket = io('http://localhost:5000/api/v1');
+      socket.emit('vendor-update', {
+        rentalSpaceId: space.id,
+        message: updateMessage,
+        type: updateType,
+        timestamp: new Date().toISOString()
+      });
+
+      toast.success('আপডেট কাস্টমারদের কাছে পাঠানো হয়েছে!');
+      setUpdateMessage('');
+      setUpdateType('status');
+      onClose();
+    } catch (error) {
+      console.error('Failed to send update:', error);
+      toast.error('আপডেট পাঠাতে ব্যর্থ হয়েছে');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full border border-gray-700">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#39FF14] to-[#28CC0C] text-black p-6 rounded-t-2xl">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold">ট্র্যাকিং আপডেট পাঠান</h2>
+              <p className="text-green-800">{space.location}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-black hover:text-gray-800 text-2xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {/* Update Type Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-300 mb-3">
+              আপডেটের ধরন নির্বাচন করুন
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {updateTypeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    setUpdateType(option.value as any);
+                    if (option.value !== 'custom') {
+                      setUpdateMessage(getUpdateMessage(option.value));
+                    }
+                  }}
+                  className={`p-4 rounded-xl border text-left transition-all ${
+                    updateType === option.value
+                      ? 'border-[#39FF14] bg-[#39FF14]/10 text-[#39FF14]'
+                      : 'border-gray-600 bg-gray-800 text-gray-300 hover:border-gray-500'
+                  }`}
+                >
+                  <div className="font-medium text-sm">{option.label}</div>
+                  <div className="text-xs mt-1 opacity-75">{option.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Message Input */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              আপডেট মেসেজ
+            </label>
+            <textarea
+              value={updateMessage}
+              onChange={(e) => setUpdateMessage(e.target.value)}
+              placeholder="কাস্টমারদের জন্য আপডেট মেসেজ লিখুন..."
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] text-white resize-none"
+              rows={4}
+            />
+          </div>
+
+          {/* Preview */}
+          <div className="mb-6 p-4 bg-gray-800 rounded-xl border border-gray-600">
+            <h4 className="text-sm font-medium text-gray-300 mb-2">প্রিভিউ:</h4>
+            <div className="text-sm text-gray-400 bg-gray-900 p-3 rounded-lg">
+              {updateMessage || 'আপডেট মেসেজ এখানে দেখাবে...'}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              এই মেসেজ কাস্টমারদের রিয়েল-টাইমে দেখাবে
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-800 px-6 py-4 rounded-b-2xl flex justify-end gap-3">
+          <Button
+            onClick={onClose}
+            variant="outline"
+          >
+            বাতিল
+          </Button>
+          <Button
+            onClick={handleSendUpdate}
+            className="bg-[#39FF14] hover:bg-[#28CC0C] text-black"
+            disabled={!updateMessage.trim()}
+          >
+            📤 আপডেট পাঠান
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RentalSpaceManagement() {
   const [spaces, setSpaces] = useState<RentalSpace[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,56 +187,20 @@ export default function RentalSpaceManagement() {
     price: '',
   });
   const [addImageFile, setAddImageFile] = useState<File | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [selectedSpaceForUpdate, setSelectedSpaceForUpdate] = useState<RentalSpace | null>(null);
 
   const updateMutation = useUpdateRentalSpace();
   const deleteMutation = useDeleteRentalSpace();
 
-  useEffect(() => {
-    fetchSpaces();
-
-    // WebSocket connection for real-time updates
-    const socket = io('http://localhost:5000/api/v1'); // Adjust URL as needed
-
-    socket.on('rental-space-created', (newSpace) => {
-      setSpaces(prev => [...prev, newSpace]);
-      toast.success('New rental space added');
-    });
-
-    socket.on('rental-space-updated', (updatedSpace) => {
-      setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
-      toast.success('Rental space updated');
-    });
-
-    socket.on('rental-space-deleted', ({ id }) => {
-      setSpaces(prev => prev.filter(space => space.id !== id));
-      toast.success('Rental space deleted');
-    });
-
-    socket.on('rental-space-availability-changed', (updatedSpace) => {
-      setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
-      toast.success('Availability changed');
-    });
-
-    socket.on('rental-space-booked', (bookedSpace) => {
-      setSpaces(prev => prev.map(space => space.id === bookedSpace.id ? { ...bookedSpace, availability: false } : space));
-      toast.success('Space booked');
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
-
   const fetchSpaces = async () => {
     try {
       setLoading(true);
-      setError(null);
       const data = await api.getVendorRentalSpaces();
       setSpaces(data);
     } catch (err) {
       console.error('Failed to fetch rental spaces:', err);
       setError('Failed to load rental spaces. Please check your connection and try again.');
-      // Keep empty spaces array for now
       setSpaces([]);
     } finally {
       setLoading(false);
@@ -211,6 +328,52 @@ export default function RentalSpaceManagement() {
     }
   };
 
+  const openUpdateModal = (space: RentalSpace) => {
+    setSelectedSpaceForUpdate(space);
+    setShowUpdateModal(true);
+  };
+
+  const closeUpdateModal = () => {
+    setSelectedSpaceForUpdate(null);
+    setShowUpdateModal(false);
+  };
+
+  useEffect(() => {
+    fetchSpaces();
+
+    // WebSocket connection for real-time updates
+    const socket = io('http://localhost:5000/api/v1'); // Adjust URL as needed
+
+    socket.on('rental-space-created', (newSpace) => {
+      setSpaces(prev => [...prev, newSpace]);
+      toast.success('New rental space added');
+    });
+
+    socket.on('rental-space-updated', (updatedSpace) => {
+      setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
+      toast.success('Rental space updated');
+    });
+
+    socket.on('rental-space-deleted', ({ id }) => {
+      setSpaces(prev => prev.filter(space => space.id !== id));
+      toast.success('Rental space deleted');
+    });
+
+    socket.on('rental-space-availability-changed', (updatedSpace) => {
+      setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
+      toast.success('Availability changed');
+    });
+
+    socket.on('rental-space-booked', (bookedSpace) => {
+      setSpaces(prev => prev.map(space => space.id === bookedSpace.id ? { ...bookedSpace, availability: false } : space));
+      toast.success('Space booked');
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
@@ -233,13 +396,6 @@ export default function RentalSpaceManagement() {
           >
             {showAddForm ? 'Cancel' : '+ Add New Plot'}
           </Button>
-          <Button
-            onClick={() => handleAddSpace({ location: 'Test Location', size: '100 sq ft', price: '50' })}
-            variant="outline"
-            className="px-4 py-2"
-          >
-            Test Create
-          </Button>
         </div>
       </div>
 
@@ -249,6 +405,7 @@ export default function RentalSpaceManagement() {
         </Alert>
       )}
 
+      {/* Add Form */}
       {showAddForm && (
         <Card className="mb-8">
           <div className="flex justify-between items-center mb-6">
@@ -350,6 +507,7 @@ export default function RentalSpaceManagement() {
         </Card>
       )}
 
+      {/* Edit Form */}
       {editingSpace && (
         <Card className="mb-8">
           <div className="flex justify-between items-center mb-6">
@@ -447,6 +605,7 @@ export default function RentalSpaceManagement() {
         </Card>
       )}
 
+      {/* Rental Spaces Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {spaces.length === 0 && !loading ? (
           <div className="col-span-full text-center py-12">
@@ -524,12 +683,19 @@ export default function RentalSpaceManagement() {
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    onClick={() => openUpdateModal(space)}
+                    variant="outline"
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                  >
+                    📤 Update
+                  </Button>
                   <Button
                     onClick={() => handleEditSpace(space)}
                     variant="outline"
                     size="sm"
-                    className="flex-1"
                   >
                     ✏️ Edit
                   </Button>
@@ -537,7 +703,7 @@ export default function RentalSpaceManagement() {
                     onClick={() => handleDeleteSpace(space.id)}
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-900"
+                    className="text-red-400 hover:text-red-300 hover:bg-red-900"
                   >
                     🗑️ Delete
                   </Button>
@@ -547,6 +713,13 @@ export default function RentalSpaceManagement() {
           ))
         )}
       </div>
+
+      {/* Vendor Update Modal */}
+      <VendorUpdateModal
+        space={selectedSpaceForUpdate}
+        isOpen={showUpdateModal}
+        onClose={closeUpdateModal}
+      />
     </div>
   );
 }

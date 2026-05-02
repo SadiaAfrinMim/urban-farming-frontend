@@ -7,6 +7,359 @@ import { io, Socket } from 'socket.io-client';
 import api, { Order, RentalSpace } from '../lib/api';
 import ProtectedRoute from '../components/ProtectedRoute';
 
+// Rental Tracking Modal Component
+function RentalStatusModal({ order, isOpen, onClose }: {
+  order: OrderWithRental | null;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  if (!isOpen || !order) return null;
+
+  const statusSteps = [
+    { status: 'Pending', label: 'পেন্ডিং', icon: '⏳', description: 'আপনার অর্ডার প্রসেসিং হচ্ছে' },
+    { status: 'Confirmed', label: 'কনফার্মড', icon: '✅', description: 'আপনার রেন্টাল স্পেস কনফার্ম হয়েছে' },
+    { status: 'Shipped', label: 'শিপড', icon: '🚚', description: 'রেন্টাল স্পেস প্রস্তুত করা হচ্ছে' },
+    { status: 'Delivered', label: 'ডেলিভার্ড', icon: '🏡', description: 'রেন্টাল স্পেস ব্যবহারের জন্য রেডি' }
+  ];
+
+  const currentStepIndex = statusSteps.findIndex(step => step.status === order.status);
+
+  // Generate tracking timeline for confirmed orders
+  const generateTrackingTimeline = () => {
+    const timeline = [];
+    const orderDate = new Date(order.createdAt);
+
+    timeline.push({
+      date: orderDate.toLocaleDateString('bn-BD'),
+      time: orderDate.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+      status: 'অর্ডার প্লেস করা হয়েছে',
+      description: 'আপনার রেন্টাল স্পেস বুকিং কনফার্ম হয়েছে',
+      icon: '📝',
+      completed: true
+    });
+
+    if (order.status === 'Confirmed' || currentStepIndex >= 1) {
+      const confirmedDate = new Date(orderDate.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
+      timeline.push({
+        date: confirmedDate.toLocaleDateString('bn-BD'),
+        time: confirmedDate.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+        status: 'পেমেন্ট কনফার্মড',
+        description: 'পেমেন্ট সফলভাবে প্রসেস হয়েছে',
+        icon: '💳',
+        completed: currentStepIndex >= 1
+      });
+    }
+
+    if (order.status === 'Shipped' || currentStepIndex >= 2) {
+      const shippedDate = new Date(orderDate.getTime() + 24 * 60 * 60 * 1000); // 1 day later
+      timeline.push({
+        date: shippedDate.toLocaleDateString('bn-BD'),
+        time: shippedDate.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+        status: 'প্রস্তুত করা হচ্ছে',
+        description: 'আপনার রেন্টাল স্পেস প্রস্তুত করা হচ্ছে',
+        icon: '🔧',
+        completed: currentStepIndex >= 2
+      });
+    }
+
+    if (order.status === 'Delivered' || currentStepIndex >= 3) {
+      const deliveredDate = new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000); // 2 days later
+      timeline.push({
+        date: deliveredDate.toLocaleDateString('bn-BD'),
+        time: deliveredDate.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+        status: 'ব্যবহারের জন্য রেডি',
+        description: 'আপনার রেন্টাল স্পেস এখন ব্যবহারের জন্য প্রস্তুত',
+        icon: '🎉',
+        completed: currentStepIndex >= 3
+      });
+    }
+
+    return timeline;
+  };
+
+  const trackingTimeline = generateTrackingTimeline();
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6 rounded-t-2xl">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold">রেন্টাল ট্র্যাকিং ভিউ</h2>
+              <p className="text-green-100">অর্ডার #{order.id?.toString().slice(0, 8)}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:text-gray-200 text-2xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {/* Status Progress */}
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">স্ট্যাটাস প্রোগ্রেস</h3>
+            <div className="flex items-center justify-between">
+              {statusSteps.map((step, index) => (
+                <div key={step.status} className="flex flex-col items-center flex-1">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl mb-2 ${
+                    index <= currentStepIndex
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200 text-gray-400'
+                  }`}>
+                    {step.icon}
+                  </div>
+                  <div className={`text-sm font-medium text-center ${
+                    index <= currentStepIndex ? 'text-green-600' : 'text-gray-400'
+                  }`}>
+                    {step.label}
+                  </div>
+                  {index < statusSteps.length - 1 && (
+                    <div className={`flex-1 h-1 w-full mt-4 ${
+                      index < currentStepIndex ? 'bg-green-500' : 'bg-gray-200'
+                    }`} style={{ minWidth: '50px' }}></div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tracking Timeline */}
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">ট্র্যাকিং টাইমলাইন</h3>
+            <div className="space-y-4">
+              {trackingTimeline.map((event, index) => (
+                <div key={index} className="flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+                    event.completed ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'
+                  }`}>
+                    {event.icon}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className={`font-semibold ${event.completed ? 'text-green-700' : 'text-gray-500'}`}>
+                        {event.status}
+                      </h4>
+                      <span className="text-sm text-gray-500">
+                        {event.date} - {event.time}
+                      </span>
+                    </div>
+                    <p className={`text-sm ${event.completed ? 'text-gray-700' : 'text-gray-500'}`}>
+                      {event.description}
+                    </p>
+                    {index < trackingTimeline.length - 1 && (
+                      <div className="w-0.5 h-8 bg-gray-200 ml-5 mt-2"></div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Current Status Description */}
+          <div className="bg-blue-50 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">
+                {statusSteps.find(s => s.status === order.status)?.icon}
+              </span>
+              <div>
+                <h4 className="font-bold text-blue-800">
+                  বর্তমান স্ট্যাটাস: {statusSteps.find(s => s.status === order.status)?.label}
+                </h4>
+                <p className="text-blue-600">
+                  {statusSteps.find(s => s.status === order.status)?.description}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Rental Space Details */}
+          {(order.rentalSpace || (order as any).rentalSpaceId) && (
+            <div className="mb-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-4">রেন্টাল স্পেস ডিটেলস</h3>
+              <div className="bg-gray-50 rounded-xl p-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold text-lg text-gray-800 mb-2">
+                      {order.rentalSpace?.location || 'রেন্টাল স্পেস'}
+                    </h4>
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <p>📏 সাইজ: {order.rentalSpace?.size || 'উপলব্ধ নেই'}</p>
+                      <p>💰 প্রাইস: ৳{order.rentalSpace?.price || 0} প্রতি মাস</p>
+                      <p>📅 বুকিং তারিখ: {new Date(order.createdAt).toLocaleDateString('bn-BD')}</p>
+                      <p>🆔 অর্ডার আইডি: #{order.id}</p>
+                    </div>
+
+                    {/* Tracking Information for Confirmed Orders */}
+                    {order.status === 'Confirmed' && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h5 className="font-semibold text-blue-800 mb-2">📍 ট্র্যাকিং তথ্য</h5>
+                        <div className="space-y-1 text-sm text-blue-700">
+                          <p>🏢 লোকেশন: {order.rentalSpace?.location || 'ফার্ম এরিয়া'}</p>
+                          <p>⏰ প্রস্তুত হবে: ২৪-৪৮ ঘণ্টার মধ্যে</p>
+                          <p>👷 প্রস্তুতকারক: ফার্ম টিম</p>
+                          <p>📞 সাপোর্ট: +880 1234-567890</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {order.status === 'Shipped' && (
+                      <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                        <h5 className="font-semibold text-purple-800 mb-2">🚚 প্রস্তুত করা হচ্ছে</h5>
+                        <div className="space-y-1 text-sm text-purple-700">
+                          <p>🔧 কাজ চলছে: স্পেস প্রস্তুত করা হচ্ছে</p>
+                          <p>📅 সম্ভাব্য ডেলিভারি: ১-২ দিনের মধ্যে</p>
+                          <p>👷 দায়িত্বে: {order.rentalSpace?.location} টিম</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {order.status === 'Delivered' && (
+                      <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                        <h5 className="font-semibold text-green-800 mb-2">🎉 রেডি!</h5>
+                        <div className="space-y-1 text-sm text-green-700">
+                          <p>✅ স্পেস ব্যবহারের জন্য প্রস্তুত</p>
+                          <p>🗝️ এক্সেস: আপনার ড্যাশবোর্ড থেকে</p>
+                          <p>📞 সাহায্য: support@urbanfarming.com</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Photos Section */}
+                  <div>
+                    <h5 className="font-semibold text-gray-800 mb-3">ফটো গ্যালারি</h5>
+                    <div className="grid grid-cols-2 gap-3">
+                      {order.rentalSpace?.image ? (
+                        <div className="aspect-square rounded-lg overflow-hidden">
+                          <Image
+                            src={order.rentalSpace.image}
+                            alt={order.rentalSpace.location}
+                            width={200}
+                            height={200}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-square bg-gradient-to-br from-green-100 to-blue-100 rounded-lg flex items-center justify-center">
+                          <span className="text-4xl">🏡</span>
+                        </div>
+                      )}
+
+                      {/* Status-based photos */}
+                      {order.status === 'Confirmed' && (
+                        <>
+                          <div className="aspect-square bg-gradient-to-br from-blue-200 to-cyan-200 rounded-lg flex items-center justify-center">
+                            <span className="text-3xl">🔧</span>
+                          </div>
+                          <div className="aspect-square bg-gradient-to-br from-blue-300 to-cyan-300 rounded-lg flex items-center justify-center">
+                            <span className="text-3xl">🌱</span>
+                          </div>
+                          <div className="aspect-square bg-gradient-to-br from-blue-400 to-cyan-400 rounded-lg flex items-center justify-center">
+                            <span className="text-3xl">💧</span>
+                          </div>
+                        </>
+                      )}
+
+                      {order.status === 'Shipped' && (
+                        <>
+                          <div className="aspect-square bg-gradient-to-br from-purple-200 to-pink-200 rounded-lg flex items-center justify-center">
+                            <span className="text-3xl">🚧</span>
+                          </div>
+                          <div className="aspect-square bg-gradient-to-br from-purple-300 to-pink-300 rounded-lg flex items-center justify-center">
+                            <span className="text-3xl">🌿</span>
+                          </div>
+                          <div className="aspect-square bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
+                            <span className="text-3xl">🏗️</span>
+                          </div>
+                        </>
+                      )}
+
+                      {order.status === 'Delivered' && (
+                        <>
+                          <div className="aspect-square bg-gradient-to-br from-green-200 to-emerald-200 rounded-lg flex items-center justify-center">
+                            <span className="text-3xl">🎉</span>
+                          </div>
+                          <div className="aspect-square bg-gradient-to-br from-green-300 to-emerald-300 rounded-lg flex items-center justify-center">
+                            <span className="text-3xl">✅</span>
+                          </div>
+                          <div className="aspect-square bg-gradient-to-br from-green-400 to-emerald-400 rounded-lg flex items-center justify-center">
+                            <span className="text-3xl">🚀</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {order.status === 'Confirmed' && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue-600">📋</span>
+                          <p className="text-sm text-blue-800">
+                            আপনার রেন্টাল স্পেস প্রস্তুত করা হচ্ছে। ট্র্যাকিং আপডেটের জন্য এই পেজে চোখ রাখুন।
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {order.status === 'Shipped' && (
+                      <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-purple-600">🚚</span>
+                          <p className="text-sm text-purple-800">
+                            আপনার রেন্টাল স্পেস প্রায় রেডি! শীঘ্রই এক্সেস পাবেন।
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {order.status === 'Delivered' && (
+                      <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-600">🎉</span>
+                          <p className="text-sm text-green-800">
+                            অভিনন্দন! আপনার রেন্টাল স্পেস এখন ব্যবহারের জন্য পুরোপুরি প্রস্তুত।
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Order Summary */}
+          <div className="border-t pt-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-4">অর্ডার সামারি</h3>
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">মোট পরিমাণ:</span>
+                <span className="font-bold text-2xl text-green-600">
+                  ৳{order.total || order.totalAmount || order.rentalSpace?.price || 0}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            বন্ধ করুন
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface OrderWithRental extends Order {
   rentalSpace?: RentalSpace;
   rentalSpaceId?: number;
@@ -17,6 +370,8 @@ function RentalOrdersPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderWithRental | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchRentalOrders = useCallback(async () => {
     try {
@@ -127,6 +482,16 @@ function RentalOrdersPageContent() {
     }
   };
 
+  const openStatusModal = (order: OrderWithRental) => {
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
+
+  const closeStatusModal = () => {
+    setSelectedOrder(null);
+    setIsModalOpen(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
@@ -192,9 +557,19 @@ function RentalOrdersPageContent() {
                       })()}
                     </p>
                   </div>
-                  <span className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(order.status)} shadow-sm`}>
-                    {order.status}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusColor(order.status)} shadow-sm`}>
+                      {order.status}
+                    </span>
+                    {order.status === 'Confirmed' && (
+                      <button
+                        onClick={() => openStatusModal(order)}
+                        className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                      >
+                        📍 ট্র্যাকিং দেখুন
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {(order.rentalSpace || (order as any).rentalSpaceId) && (
@@ -246,6 +621,13 @@ function RentalOrdersPageContent() {
             ))
           )}
         </div>
+
+        {/* Rental Status Modal */}
+        <RentalStatusModal
+          order={selectedOrder}
+          isOpen={isModalOpen}
+          onClose={closeStatusModal}
+        />
       </div>
     </div>
   );

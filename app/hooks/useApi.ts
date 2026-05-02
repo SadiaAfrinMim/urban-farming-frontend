@@ -427,6 +427,14 @@ export const useFeaturedVendors = () => {
   });
 };
 
+export const useApprovedVendorCertificates = () => {
+  return useQuery({
+    queryKey: ['home-approved-vendor-certificates'],
+    queryFn: () => api.getApprovedVendorCertificates(),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
 export const useAllVendorsData = (filters?: any) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'Admin';

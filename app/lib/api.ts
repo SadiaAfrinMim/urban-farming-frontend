@@ -22,6 +22,7 @@ export interface Produce {
   availableQuantity: number;
   certificationStatus: string;
   unit?: string;
+  isOrganic: boolean;
   createdAt: string;
   updatedAt: string;
   vendorId?: string;
@@ -31,6 +32,8 @@ export interface Produce {
       name: string;
     };
     farmName: string;
+    farmLocation: string;
+    certificationStatus: string;
     sustainabilityCerts: Array<{
       certifyingAgency: string;
       certificationDate: string;
@@ -166,6 +169,20 @@ export interface VendorProfile {
   certifications: string[];
   createdAt: string;
   updatedAt: string;
+  produces?: Array<{
+    id: string;
+    name: string;
+    category: string;
+  }>;
+  rentalSpaces?: Array<{
+    id: number;
+    location: string;
+    availability: boolean;
+  }>;
+  user?: {
+    name: string;
+    email: string;
+  };
 }
 
 export interface UserProfile {
@@ -626,6 +643,13 @@ const api = {
     return data.data;
   },
 
+  getAllProfiles: async (filters?: any) => {
+    const queryString = filters ? new URLSearchParams(filters).toString() : '';
+    const url = queryString ? `/admin/profiles?${queryString}` : '/admin/profiles';
+    const data = await apiClient.get<ApiResponse<any[]>>(url);
+    return data.data;
+  },
+
   updateUserStatusAdmin: async (userId: string, status: string) => {
     return apiClient.patch(`/admin/users/${userId}/status`, { status });
   },
@@ -855,6 +879,16 @@ const api = {
     return Array.isArray(data.data) ? data.data : [];
   },
 
+  getVendorRentalOrders: async (): Promise<Order[]> => {
+    const data = await apiClient.get<ApiResponse<Order[]>>('/rentals/vendor/orders');
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  updateVendorRentalOrderStatus: async (orderId: number, status: string): Promise<Order> => {
+    const data = await apiClient.patch<ApiResponse<Order>>(`/rentals/vendor/orders/${orderId}/status`, { status });
+    return data.data;
+  },
+
   // Customer APIs
   getCustomerPosts: async (): Promise<CustomerPost[]> => {
     const data = await apiClient.get<ApiResponse<CustomerPost[]>>('/customer/posts');
@@ -959,6 +993,11 @@ const api = {
 
   getFeaturedVendors: async () => {
     const data = await apiClient.get<ApiResponse<any[]>>('/home/featured-vendors');
+    return data.data;
+  },
+
+  getApprovedVendorCertificates: async () => {
+    const data = await apiClient.get<ApiResponse<any[]>>('/home/approved-vendors-certificates');
     return data.data;
   },
 
