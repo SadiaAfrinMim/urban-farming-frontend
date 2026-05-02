@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { io, Socket } from 'socket.io-client';
-import api, { Order, RentalSpace } from '../lib/api';
+import api, { Order, RentalSpace, SOCKET_BASE_URL } from '../lib/api';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 // Rental Tracking Modal Component
@@ -400,76 +400,60 @@ function RentalOrdersPageContent() {
     };
     loadData();
 
-    // Connect to socket for real-time order updates
-    const socketConnection = io('https://urban-farming-backend-pink.vercel.app', {
-      transports: ['websocket', 'polling'],
-    });
+    // Connect to socket for real-time order updates (only in development)
+    let socketConnection: any = null;
+    if (process.env.NODE_ENV === 'development') {
+      socketConnection = io(SOCKET_BASE_URL, {
+        transports: ['websocket', 'polling'],
+      });
 
-    socketConnection.on('connect', () => {
-      console.log('RentalOrdersPage: Connected to WebSocket server');
-    });
+      socketConnection.on('connect', () => {
+        console.log('RentalOrdersPage: Connected to WebSocket server');
+      });
 
-    socketConnection.on('disconnect', () => {
-      console.log('RentalOrdersPage: Disconnected from WebSocket server');
-    });
+      socketConnection.on('disconnect', () => {
+        console.log('RentalOrdersPage: Disconnected from WebSocket server');
+      });
 
-    // Listen for rental order updates
-    socketConnection.on('rental-space-booked', (bookedSpace: RentalSpace) => {
-      console.log('RentalOrdersPage: Rental space booked:', bookedSpace);
-      // Refresh orders to show updated status
-      fetchRentalOrders();
-    });
+      // Listen for rental order updates
+      socketConnection.on('rental-space-booked', (bookedSpace: RentalSpace) => {
+        console.log('RentalOrdersPage: Rental space booked:', bookedSpace);
+        // Refresh orders to show updated status
+        fetchRentalOrders();
+      });
 
-    socketConnection.on('rental-order-completed', (data: { orderId: number; rentalSpaceId: number; customerId: number }) => {
-      console.log('RentalOrdersPage: Rental order completed:', data);
-      // Refresh orders to show updated status
-      fetchRentalOrders();
-    });
+      socketConnection.on('rental-order-completed', (data: { orderId: number; rentalSpaceId: number; customerId: number }) => {
+        console.log('RentalOrdersPage: Rental order completed:', data);
+        // Refresh orders to show updated status
+        fetchRentalOrders();
+      });
 
-    // Listen for order status updates
-    socketConnection.on('order-status-updated', (updatedOrder: Order) => {
-      console.log('RentalOrdersPage: Order status updated:', updatedOrder);
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order.id === updatedOrder.id ? { ...order, ...updatedOrder } : order
-        )
-      );
-    });
+      // Listen for order status updates
+      socketConnection.on('order-status-updated', (updatedOrder: Order) => {
+        console.log('RentalOrdersPage: Order status updated:', updatedOrder);
+        setOrders(prevOrders =>
+          prevOrders.map(order =>
+            order.id === updatedOrder.id ? { ...order, ...updatedOrder } : order
+          )
+        );
+      });
 
-    // Listen for new orders
-    socketConnection.on('order-created', (newOrder: Order) => {
-      console.log('RentalOrdersPage: New order created:', newOrder);
-      fetchRentalOrders(); // Refresh to get new rental orders
-    });
+      // Listen for new orders
+      socketConnection.on('order-created', (newOrder: Order) => {
+        console.log('RentalOrdersPage: New order created:', newOrder);
+        fetchRentalOrders(); // Refresh to get new rental orders
+      });
 
-    socketConnection.on('rental-order-completed', (data: { orderId: number; rentalSpaceId: number; customerId: number }) => {
-      // Refresh orders to show updated status
-      fetchRentalOrders();
-    });
+      socketConnection.on('connect_error', (error) => {
+        console.error('RentalOrdersPage: WebSocket connection error:', error);
+      });
 
-    // Listen for order status updates
-    socketConnection.on('order-status-updated', (updatedOrder: Order) => {
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order.id === updatedOrder.id ? { ...order, ...updatedOrder } : order
-        )
-      );
-    });
+      setSocket(socketConnection);
 
-    socketConnection.on('rental-order-completed', (data: { orderId: number; rentalSpaceId: number; customerId: number }) => {
-      // Refresh orders to show updated status
-      fetchRentalOrders();
-    });
-
-    socketConnection.on('connect_error', (error) => {
-      console.error('RentalOrdersPage: WebSocket connection error:', error);
-    });
-
-    setSocket(socketConnection);
-
-    return () => {
-      socketConnection.disconnect();
-    };
+      return () => {
+        socketConnection.disconnect();
+      };
+    }
   }, []);
 
   const getStatusColor = (status: string) => {

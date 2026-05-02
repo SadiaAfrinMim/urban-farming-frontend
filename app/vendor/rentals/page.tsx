@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, Button, Input, Alert, LoadingSpinner, StatusBadge } from '../../components/ui';
-import api from '../../lib/api';
+import api, { SOCKET_BASE_URL } from '../../lib/api';
 import toast from 'react-hot-toast';
 import { useUpdateRentalSpace, useDeleteRentalSpace } from '../../hooks/useApi';
 import Image from 'next/image';
@@ -58,14 +58,16 @@ function VendorUpdateModal({ space, isOpen, onClose }: {
 
     try {
       // Here we would send the update to customers via API
-      // For now, we'll just emit a socket event
-      const socket = io('http://localhost:5000/api/v1');
-      socket.emit('vendor-update', {
-        rentalSpaceId: space.id,
-        message: updateMessage,
-        type: updateType,
-        timestamp: new Date().toISOString()
-      });
+      // For now, we'll just emit a socket event (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        const socket = io(SOCKET_BASE_URL);
+        socket.emit('vendor-update', {
+          rentalSpaceId: space.id,
+          message: updateMessage,
+          type: updateType,
+          timestamp: new Date().toISOString()
+        });
+      }
 
       toast.success('আপডেট কাস্টমারদের কাছে পাঠানো হয়েছে!');
       setUpdateMessage('');
@@ -341,37 +343,39 @@ export default function RentalSpaceManagement() {
   useEffect(() => {
     fetchSpaces();
 
-    // WebSocket connection for real-time updates
-    const socket = io('http://localhost:5000/api/v1'); // Adjust URL as needed
+    // WebSocket connection for real-time updates (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      const socket = io(SOCKET_BASE_URL);
 
-    socket.on('rental-space-created', (newSpace) => {
-      setSpaces(prev => [...prev, newSpace]);
-      toast.success('New rental space added');
-    });
+      socket.on('rental-space-created', (newSpace) => {
+        setSpaces(prev => [...prev, newSpace]);
+        toast.success('New rental space added');
+      });
 
-    socket.on('rental-space-updated', (updatedSpace) => {
-      setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
-      toast.success('Rental space updated');
-    });
+      socket.on('rental-space-updated', (updatedSpace) => {
+        setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
+        toast.success('Rental space updated');
+      });
 
-    socket.on('rental-space-deleted', ({ id }) => {
-      setSpaces(prev => prev.filter(space => space.id !== id));
-      toast.success('Rental space deleted');
-    });
+      socket.on('rental-space-deleted', ({ id }) => {
+        setSpaces(prev => prev.filter(space => space.id !== id));
+        toast.success('Rental space deleted');
+      });
 
-    socket.on('rental-space-availability-changed', (updatedSpace) => {
-      setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
-      toast.success('Availability changed');
-    });
+      socket.on('rental-space-availability-changed', (updatedSpace) => {
+        setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
+        toast.success('Availability changed');
+      });
 
-    socket.on('rental-space-booked', (bookedSpace) => {
-      setSpaces(prev => prev.map(space => space.id === bookedSpace.id ? { ...bookedSpace, availability: false } : space));
-      toast.success('Space booked');
-    });
+      socket.on('rental-space-booked', (bookedSpace) => {
+        setSpaces(prev => prev.map(space => space.id === bookedSpace.id ? { ...bookedSpace, availability: false } : space));
+        toast.success('Space booked');
+      });
 
-    return () => {
-      socket.disconnect();
-    };
+      return () => {
+        socket.disconnect();
+      };
+    }
   }, []);
 
   if (loading) {

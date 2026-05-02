@@ -199,9 +199,13 @@ export interface UserProfile {
 }
 
 // API Base URL - dynamically use environment variable or fallback
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
   ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
+  : process.env.NODE_ENV === 'production'
+  ? 'https://urban-farming-backend-production.up.railway.app/api/v1'  // Replace with your Railway URL
   : 'https://urban-farming-backend-pink.vercel.app/api/v1';
+
+export const SOCKET_BASE_URL = API_BASE_URL.replace('/api/v1', '');
 
 // Custom error class for API errors
 export class ApiError extends Error {
@@ -227,7 +231,7 @@ const apiClient = {
     };
 
     // Add Authorization header if token is available in localStorage
-    const token = localStorage.getItem('accessToken');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -352,7 +356,7 @@ const apiClient = {
     // Cookies are sent automatically with all requests
 
     // Add Authorization header if token is available in localStorage
-    const token = localStorage.getItem('accessToken');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }

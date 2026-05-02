@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import api, { RentalSpace } from '../lib/api';
+import api, { RentalSpace, SOCKET_BASE_URL } from '../lib/api';
 import toast from 'react-hot-toast';
 import { io, Socket } from 'socket.io-client';
 
@@ -22,10 +22,6 @@ export default function RentalsPage() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [liveUpdates, setLiveUpdates] = useState<LiveUpdate[]>([]);
 
-  useEffect(() => {
-    fetchSpaces();
-  }, []);
-
   const fetchSpaces = async () => {
     try {
       setLoading(true);
@@ -37,6 +33,10 @@ export default function RentalsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSpaces();
+  }, []);
 
   const searchSpaces = async () => {
     if (!searchQuery && selectedSize === 'all' && selectedAvailability === 'all') {
@@ -80,9 +80,11 @@ export default function RentalsPage() {
     return () => clearTimeout(timer);
   }, [selectedSize, selectedAvailability, searchQuery]);
 
-  // Real-time updates socket connection
+  // Real-time updates socket connection (only in development)
   useEffect(() => {
-    const socketConnection = io('https://urban-farming-backend-pink.vercel.app', {
+    if (process.env.NODE_ENV !== 'development') return;
+
+    const socketConnection = io(SOCKET_BASE_URL, {
       transports: ['websocket', 'polling'],
     });
 

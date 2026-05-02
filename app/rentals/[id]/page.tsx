@@ -4,6 +4,7 @@ import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRentalSpace, useCreateOrder } from '../../hooks/useApi';
+import { SOCKET_BASE_URL } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { io, Socket } from 'socket.io-client';
@@ -50,11 +51,11 @@ export default function RentalDetailPage({ params }: PageProps) {
     }
   }, [rentalSpace]);
 
-  // Real-time updates socket connection
+  // Real-time updates socket connection (only in development)
   useEffect(() => {
-    if (rentalSpace) {
+    if (rentalSpace && process.env.NODE_ENV === 'development') {
       // Connect to WebSocket server
-      const socketConnection = io('https://urban-farming-backend-pink.vercel.app', {
+      const socketConnection = io(SOCKET_BASE_URL, {
         transports: ['websocket', 'polling'],
       });
 

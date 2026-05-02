@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Bell, X, Check } from 'lucide-react';
 import { Card } from './ui';
-import api from '../lib/api';
+import api, { SOCKET_BASE_URL } from '../lib/api';
 import { io } from 'socket.io-client';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -33,32 +33,34 @@ export function NotificationDropdown() {
       fetchNotifications();
       fetchUnreadCount();
 
-      // WebSocket connection for real-time notifications
-      const socket = io('http://localhost:5000');
+      // WebSocket connection for real-time notifications (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        const socket = io(SOCKET_BASE_URL);
 
-      socket.on('connect', () => {
-        console.log('NotificationDropdown: Connected to WebSocket server');
-      });
+        socket.on('connect', () => {
+          console.log('NotificationDropdown: Connected to WebSocket server');
+        });
 
-      socket.on('disconnect', () => {
-        console.log('NotificationDropdown: Disconnected from WebSocket server');
-      });
+        socket.on('disconnect', () => {
+          console.log('NotificationDropdown: Disconnected from WebSocket server');
+        });
 
-      socket.on(`notification-${parseInt(user.id)}`, (newNotification: Notification) => {
-        console.log('NotificationDropdown: Received notification:', newNotification);
-        setNotifications(prev => Array.isArray(prev) ? [newNotification, ...prev] : [newNotification]);
-        setUnreadCount(prev => prev + 1);
-        // Show toast notification
-        toast.success(newNotification.title);
-      });
+        socket.on(`notification-${parseInt(user.id)}`, (newNotification: Notification) => {
+          console.log('NotificationDropdown: Received notification:', newNotification);
+          setNotifications(prev => Array.isArray(prev) ? [newNotification, ...prev] : [newNotification]);
+          setUnreadCount(prev => prev + 1);
+          // Show toast notification
+          toast.success(newNotification.title);
+        });
 
-      socket.on('connect_error', (error) => {
-        console.error('NotificationDropdown: WebSocket connection error:', error);
-      });
+        socket.on('connect_error', (error) => {
+          console.error('NotificationDropdown: WebSocket connection error:', error);
+        });
 
-      return () => {
-        socket.disconnect();
-      };
+        return () => {
+          socket.disconnect();
+        };
+      }
     } else {
       console.log('NotificationDropdown: No user logged in');
       // Clear notifications when user logs out

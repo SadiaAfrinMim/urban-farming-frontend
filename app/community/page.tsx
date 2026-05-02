@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { io, Socket } from 'socket.io-client';
-import api, { CommunityPost } from '../lib/api';
+import api, { CommunityPost, SOCKET_BASE_URL } from '../lib/api';
 import { Card, Button, LoadingSpinner, Alert } from '../components/ui';
 import ProfileImage from '../components/ProfileImage';
 import { useToggleLike, useAddComment, useDeleteComment } from '../hooks/useApi';
@@ -27,7 +27,7 @@ export default function CommunityPage() {
     fetchPosts();
 
     // Connect to socket for real-time updates
-    const socketConnection = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000');
+    const socketConnection = io(SOCKET_BASE_URL);
     setSocket(socketConnection);
 
     // Listen for real-time updates

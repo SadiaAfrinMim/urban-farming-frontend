@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { SOCKET_BASE_URL } from '../lib/api';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -24,7 +25,12 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const socketInstance = io('http://localhost:5000', {
+    // Only connect to socket in development environment
+    if (process.env.NODE_ENV !== 'development') {
+      return;
+    }
+
+    const socketInstance = io(SOCKET_BASE_URL, {
       transports: ['websocket', 'polling'],
     });
 
