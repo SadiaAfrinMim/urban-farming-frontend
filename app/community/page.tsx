@@ -144,11 +144,11 @@ export default function CommunityPage() {
     <div className="max-w-7xl mx-auto p-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">🌱 কমিউনিটি ফোরাম</h1>
-          <p className="text-gray-600 mt-2">উদ্যানবিদদের সাথে যুক্ত হোন এবং জ্ঞান ভাগ করুন</p>
+          <h1 className="text-3xl font-bold text-lime-600">🌱 কমিউনিটি ফোরাম</h1>
+          <p className="text-lime-600 mt-2">উদ্যানবিদদের সাথে যুক্ত হোন এবং জ্ঞান ভাগ করুন</p>
         </div>
         <Link href="/">
-          <Button variant="outline">
+          <Button variant="outline" className="border-lime-500 text-lime-600 hover:bg-lime-50">
             ← হোম পেজে ফিরে যান
           </Button>
         </Link>
@@ -173,7 +173,7 @@ export default function CommunityPage() {
                 <Button
                   type="submit"
                   disabled={posting || !newPost.trim()}
-                  className="bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 px-6 py-2"
+                  className="bg-lime-500 text-white hover:bg-lime-400 px-6 py-2"
                 >
                   {posting ? <LoadingSpinner size="sm" /> : '📝 পোস্ট করুন'}
                 </Button>
@@ -235,7 +235,7 @@ export default function CommunityPage() {
             <div className="text-6xl mb-4">🌱</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">কোনো পোস্ট পাওয়া যায়নি</h3>
             <p className="text-gray-600 mb-6">প্রথম পোস্ট করে কমিউনিটি শুরু করুন!</p>
-            <Button onClick={() => document.querySelector('textarea')?.focus()} className="bg-green-600 hover:bg-green-700">
+            <Button onClick={() => document.querySelector('textarea')?.focus()} className="bg-lime-500 hover:bg-lime-400">
               ✍️ প্রথম পোস্ট করুন
             </Button>
           </Card>
@@ -284,7 +284,7 @@ export default function CommunityPage() {
                          size="sm"
                          onClick={() => handleToggleLike(post.id)}
                          disabled={toggleLikeMutation.isPending}
-                         className="hover:bg-red-50 hover:border-red-200"
+                         className="border-lime-500 text-lime-600 hover:bg-lime-50"
                        >
                          👍 লাইক
                        </Button>
@@ -292,7 +292,7 @@ export default function CommunityPage() {
                          variant="outline"
                          size="sm"
                          onClick={() => toggleComments(post.id)}
-                         className="hover:bg-blue-50 hover:border-blue-200"
+                         className="border-lime-500 text-lime-600 hover:bg-lime-50"
                        >
                          💬 কমেন্ট
                        </Button>
@@ -329,7 +329,7 @@ export default function CommunityPage() {
                                    size="sm"
                                    onClick={() => handleDeleteComment(comment.id)}
                                    disabled={deleteCommentMutation.isPending}
-                                   className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
+                                   className="text-lime-600 hover:text-lime-700 hover:bg-lime-50 p-1 h-auto border-lime-500"
                                  >
                                    🗑️
                                  </Button>
@@ -359,7 +359,7 @@ export default function CommunityPage() {
                            size="sm"
                            onClick={() => handleAddComment(post.id)}
                            disabled={addCommentMutation.isPending || !commentContent[post.id]?.trim()}
-                           className="bg-blue-600 hover:bg-blue-700 text-white px-4"
+                           className="bg-lime-500 hover:bg-lime-400 text-white px-4"
                          >
                            {addCommentMutation.isPending ? <LoadingSpinner size="sm" /> : 'পোস্ট'}
                          </Button>

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useChatMessages, useHandleChatMessage } from '../hooks/useApi';
 import { MessageCircle, Send, X, Bot, User } from 'lucide-react';
 import { ChatMessage } from '../lib/api';
+import toast from 'react-hot-toast';
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,31 +45,35 @@ export default function Chatbot() {
     setLocalMessages(prev => [...prev, userMsg]);
 
     try {
-      await handleChatMutation.mutateAsync({
+      const result = await handleChatMutation.mutateAsync({
         userId: user?.id || 'guest',
         message: userMessage,
       });
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      // For demo purposes, add a mock bot response
-      setTimeout(() => {
-        const botResponses = [
-          'আমি আপনাকে সাহায্য করতে পারি! কৃষি সম্পর্কিত কোনো প্রশ্ন আছে?',
-          'অর্বান ফার্মিংয়ের জন্য আপনার কোনো পরামর্শ দরকার?',
-          'আমাদের মার্কেটপ্লেসে বিভিন্ন ধরনের তাজা পণ্য পাবেন!',
-          'কৃষি টিপস এবং পরামর্শের জন্য আমাকে জিজ্ঞাসা করুন।',
-          'ধন্যবাদ আপনার প্রশ্নের জন্য! আর কিছু জানতে চান?'
-        ];
 
-        const randomResponse = botResponses[Math.floor(Math.random() * botResponses.length)];
+      // Add bot response from API
+      if (result) {
         const botMsg = {
+          id: result.id?.toString() || (Date.now() + 1).toString(),
+          message: result.message,
+          isBot: true,
+          timestamp: result.timestamp || new Date().toISOString()
+        };
+        setLocalMessages(prev => [...prev, botMsg]);
+      }
+    } catch (error: any) {
+      console.error('Failed to send message:', error);
+      toast.error('চ্যাটবটের সাথে যোগাযোগ করতে সমস্যা হচ্ছে। অনুগ্রহ করে পরে আবার চেষ্টা করুন।');
+
+      // Show error message to user instead of mock response
+      setTimeout(() => {
+        const errorMsg = {
           id: (Date.now() + 1).toString(),
-          message: randomResponse,
+          message: 'দুঃখিত, বর্তমানে চ্যাটবট সার্ভিস উপলব্ধ নেই। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।',
           isBot: true,
           timestamp: new Date().toISOString()
         };
-        setLocalMessages(prev => [...prev, botMsg]);
-      }, 1500);
+        setLocalMessages(prev => [...prev, errorMsg]);
+      }, 1000);
     }
   };
 

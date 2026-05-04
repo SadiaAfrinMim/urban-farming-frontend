@@ -5,7 +5,7 @@
   "installCommand": "npm install",
   "devCommand": "npm run dev",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://urban-farming-backend-pink.vercel.app",
+    "NEXT_PUBLIC_API_URL": "https://urban-farming-rt02.onrender.com/",
     "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51TBWwgCPSjSh2u8aqmr9vBHJKbG4bTaEHLC8zCaJx0QjoeNPrlULiZcW0tdPkBbRDfzFysGnUc48qPvpDNDSMu9Q00TotwWeR4"
   }
 }

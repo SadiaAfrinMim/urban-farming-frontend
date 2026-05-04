@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '../lib/api';
 
 interface User {
@@ -25,6 +26,7 @@ interface AuthContextType {
   }) => Promise<void>;
   logout: () => void;
   refreshToken: () => Promise<void>;
+  updateProfile: (profileData: any) => Promise<void>;
   isAuthenticated: boolean;
   hasRole: (role: string) => boolean;
 }
@@ -46,6 +48,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     // Check authentication status with backend on app load
@@ -115,7 +118,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           name: userData.name,
           email: userData.email,
           password: userData.password,
-          adminCode: 'DEMO123', // Demo admin code for development
+          adminCode: userData.adminCode || 'DEMO123',
         });
       } else {
         throw new Error('Invalid role selected');
@@ -142,6 +145,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       // User state is cleared, cookies are cleared by backend
       setUser(null);
+      // Redirect to login page
+      router.push('/login');
     }
   };
 
@@ -160,6 +165,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateProfile = async (profileData: any) => {
+    try {
+      const response = await api.updateProfile(profileData);
+      if (response.success && response.data) {
+        setUser(response.data);
+      } else {
+        throw new Error(response.message || 'Profile update failed');
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const hasRole = (role: string) => {
     return user?.role === role;
   };
@@ -171,6 +189,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     refreshToken,
+    updateProfile,
     isAuthenticated: !!user,
     hasRole,
   };

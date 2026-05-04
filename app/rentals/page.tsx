@@ -26,9 +26,35 @@ export default function RentalsPage() {
     try {
       setLoading(true);
       const data = await api.getRentalSpaces();
-      setSpaces(data);
+
+      // Fetch vendor information for each rental space
+      const spacesWithVendors = await Promise.all(
+        data.map(async (space) => {
+          try {
+            // Try to get vendor info - this might fail if not authorized
+            const vendors = await api.getAllUsers();
+            const vendor = vendors.find(v => v.id === space.vendorId.toString());
+            return {
+              ...space,
+              vendor: vendor ? {
+                id: vendor.id,
+                name: vendor.name,
+                farmName: vendor.name, // For consistency with marketplace
+                farmLocation: 'Location not available', // Default since we don't have detailed vendor info
+                certificationStatus: 'Pending' // Default
+              } : null
+            };
+          } catch (vendorError) {
+            // If vendor info can't be fetched, continue without it
+            console.warn(`Could not fetch vendor info for space ${space.id}:`, vendorError);
+            return space;
+          }
+        })
+      );
+
+      setSpaces(spacesWithVendors);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'রেন্টাল স্পেস লিস্ট পেতে সমস্যা হয়েছে');
+      setError(err instanceof Error ? err.message : 'Failed to load rental spaces list');
     } finally {
       setLoading(false);
     }
@@ -67,7 +93,7 @@ export default function RentalsPage() {
 
       setSpaces(filteredSpaces);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'সার্চ করা যাচ্ছে না');
+      setError(err instanceof Error ? err.message : 'Search failed');
     } finally {
       setLoading(false);
     }
@@ -80,46 +106,43 @@ export default function RentalsPage() {
     return () => clearTimeout(timer);
   }, [selectedSize, selectedAvailability, searchQuery]);
 
-  // Real-time updates socket connection (only in development)
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
-
     const socketConnection = io(SOCKET_BASE_URL, {
       transports: ['websocket', 'polling'],
     });
 
     socketConnection.on('connect', () => {
-      console.log('RentalsPage: Connected to WebSocket server');
+      console.log('রেন্টালসপেজ: ওয়েবসকেট সার্ভারে কানেক্টেড');
       setLiveUpdates(prev => [...prev, {
-        message: '🔗 রিয়েল-টাইম আপডেট সংযোগ স্থাপিত',
+        message: '🔗 Real-time update connection established',
         timestamp: new Date()
       }]);
     });
 
     socketConnection.on('disconnect', () => {
-      console.log('RentalsPage: Disconnected from WebSocket server');
+      console.log('রেন্টালসপেজ: ওয়েবসকেট সার্ভার থেকে ডিসকানেক্টেড');
       setLiveUpdates(prev => [...prev, {
-        message: '🔌 সংযোগ বিচ্ছিন্ন',
+        message: '🔌 Connection disconnected',
         timestamp: new Date()
       }]);
     });
 
     socketConnection.on('rental-space-updated', (updatedSpace: any) => {
-      console.log('RentalsPage: Rental space updated:', updatedSpace);
+      console.log('রেন্টালসপেজ: রেন্টাল স্পেস আপডেটেড:', updatedSpace);
       setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
       setLiveUpdates(prev => [{
-        message: `🔄 রেন্টাল স্পেস আপডেট হয়েছে: ${updatedSpace.location}`,
+        message: `🔄 Rental space updated: ${updatedSpace.location}`,
         timestamp: new Date()
       }, ...prev.slice(0, 4)]);
-      toast.success('রেন্টাল স্পেস আপডেট হয়েছে!');
+      toast.success('Rental space updated!');
     });
 
     socketConnection.on('rental-space-availability-changed', (updatedSpace: any) => {
-      console.log('RentalsPage: Availability changed:', updatedSpace);
+      console.log('রেন্টালসপেজ: উপলব্ধতা পরিবর্তিত:', updatedSpace);
       setSpaces(prev => prev.map(space => space.id === updatedSpace.id ? updatedSpace : space));
       const availabilityMessage = updatedSpace.availability
-        ? `✅ রেন্টাল স্পেস এখন উপলব্ধ: ${updatedSpace.location}`
-        : `❌ রেন্টাল স্পেস বুক হয়েছে: ${updatedSpace.location}`;
+        ? `✅ Rental space now available: ${updatedSpace.location}`
+        : `❌ Rental space booked: ${updatedSpace.location}`;
       setLiveUpdates(prev => [{
         message: availabilityMessage,
         timestamp: new Date()
@@ -128,27 +151,27 @@ export default function RentalsPage() {
     });
 
     socketConnection.on('plant-status-updated', (updateData: any) => {
-      console.log('RentalsPage: Plant status updated:', updateData);
+      console.log('রেন্টালসপেজ: গাছের অবস্থা আপডেটেড:', updateData);
       setLiveUpdates(prev => [{
-        message: `🌱 গাছের অবস্থা আপডেট: ${updateData.status} (${updateData.rentalSpaceId})`,
+        message: `🌱 Plant status updated: ${updateData.status} (${updateData.rentalSpaceId})`,
         timestamp: new Date()
       }, ...prev.slice(0, 4)]);
-      toast.info('গাছের অবস্থা আপডেট হয়েছে');
+      toast.info('Plant status updated');
     });
 
     socketConnection.on('watering-completed', (updateData: any) => {
-      console.log('RentalsPage: Watering completed:', updateData);
+      console.log('রেন্টালসপেজ: পানি দেওয়া সম্পন্ন:', updateData);
       setLiveUpdates(prev => [{
-        message: `💧 পানি দেওয়া হয়েছে - ${new Date().toLocaleTimeString('bn-BD')} (${updateData.rentalSpaceId})`,
+        message: `💧 Watering completed - ${new Date().toLocaleTimeString()} (${updateData.rentalSpaceId})`,
         timestamp: new Date()
       }, ...prev.slice(0, 4)]);
-      toast.info('পানি দেওয়া সম্পন্ন!');
+      toast.info('Watering completed!');
     });
 
     socketConnection.on('vendor-update', (updateData: any) => {
-      console.log('RentalsPage: Vendor update:', updateData);
+      console.log('রেন্টালসপেজ: ভেন্ডর আপডেট:', updateData);
       setLiveUpdates(prev => [{
-        message: `👨‍🌾 ভেন্ডর আপডেট: ${updateData.message} (${updateData.rentalSpaceId})`,
+        message: `👨‍🌾 Vendor update: ${updateData.message} (${updateData.rentalSpaceId})`,
         timestamp: new Date()
       }, ...prev.slice(0, 4)]);
       toast.info(updateData.message);
@@ -165,7 +188,7 @@ export default function RentalsPage() {
     try {
       const userProfile = await api.getMyProfile();
       if (!userProfile.success) {
-        toast.error('প্রথমে লগইন করুন');
+        toast.error('Please login first');
         return;
       }
     } catch {
@@ -173,7 +196,7 @@ export default function RentalsPage() {
       return;
     }
 
-    if (!confirm(`আপনি কি এই রেন্টাল স্পেস বুক করতে চান?\n\n📍 লোকেশন: ${space.location}\n💰 মূল্য: ৳${space.price}/মাস\n📏 সাইজ: ${space.size}`)) {
+    if (!confirm(`Do you want to book this rental space?\n\n📍 Location: ${space.location}\n💰 Price: ৳${space.price}/month\n📏 Size: ${space.size}`)) {
       return;
     }
 
@@ -184,14 +207,14 @@ export default function RentalsPage() {
         totalPrice: space.price,
         duration: 1,
       });
-      toast.success('🎉 রেন্টাল স্পেস সফলভাবে বুক করা হয়েছে!');
+      toast.success('🎉 Rental space booked successfully!');
       setSpaces(prev => prev.map(s => s.id === space.id ? {...s, availability: false} : s));
       setTimeout(() => {
         fetchSpaces();
       }, 1000);
     } catch (err: any) {
       console.error('Failed to book rental space:', err);
-      toast.error(err?.response?.data?.message || err?.message || 'বুক করা যায়নি। আবার চেষ্টা করুন।');
+      toast.error(err?.response?.data?.message || err?.message || 'Booking failed. Please try again.');
     } finally {
       setBookingLoading(null);
     }
@@ -205,8 +228,8 @@ export default function RentalsPage() {
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-cyan-500 border-t-transparent"></div>
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500/20 to-blue-500/20 animate-pulse"></div>
           </div>
-          <div className="text-xl text-cyan-400 font-medium">পানির উদ্যান লোড হচ্ছে...</div>
-          <div className="text-sm text-gray-500">আপনার স্বপ্নের উদ্যান খুঁজে আনা হচ্ছে</div>
+          <div className="text-xl text-cyan-400 font-medium">হাইড্রোপোনিক গার্ডেন লোড হচ্ছে...</div>
+          <div className="text-sm text-gray-500">আপনার স্বপ্নের বাগান খুঁজছি</div>
         </div>
       </div>
     );
@@ -222,7 +245,7 @@ export default function RentalsPage() {
           onClick={fetchSpaces}
           className="px-8 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl hover:from-red-700 hover:to-pink-700 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
         >
-          🔄 আবার চেষ্টা করুন
+          🔄 Try Again
         </button>
       </div>
     );
@@ -234,14 +257,14 @@ export default function RentalsPage() {
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <Link href="/" className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
-            ← হোম পেজে ফিরে যান
+            ← Back to Home
           </Link>
           <div className="flex gap-4">
             <Link href="/marketplace" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
-              🛒 মার্কেটপ্লেস
+              🛒 Marketplace
             </Link>
             <Link href="/orders" className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors">
-              📦 আমার অর্ডার
+              📦 My Orders
             </Link>
           </div>
         </div>
@@ -250,13 +273,13 @@ export default function RentalsPage() {
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 bg-cyan-500/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-cyan-500/20">
             <span className="text-2xl">💧</span>
-            <span className="text-cyan-300 font-medium">পানির উদ্যান</span>
+            <span className="text-cyan-300 font-medium">হাইড্রোপোনিক গার্ডেন</span>
           </div>
           <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-300 bg-clip-text text-transparent mb-6">
-            পানির রেন্টাল স্পেস
+            হাইড্রোপোনিক ভাড়া স্পেস
           </h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            আপনার নিজস্ব পানির উদ্যান তৈরি করুন। সবুজ পরিবেশে আধুনিক কৃষি শুরু করুন।
+            আপনার নিজস্ব হাইড্রোপোনিক গার্ডেন তৈরি করুন। সবুজ পরিবেশে আধুনিক কৃষি শুরু করুন।
           </p>
         </div>
 
@@ -273,7 +296,7 @@ export default function RentalsPage() {
               <div className="text-3xl font-bold text-green-400 mb-2">
                 {spaces.filter(s => s.availability).length}
               </div>
-              <div className="text-sm text-gray-400">অভ্যন্তরীণ</div>
+              <div className="text-sm text-gray-400">উপলব্ধ</div>
             </div>
           </div>
           <div className="bg-gray-900/80 backdrop-blur-sm p-6 rounded-2xl border border-gray-800 shadow-xl hover:border-red-500/30 transition-all">
@@ -281,7 +304,7 @@ export default function RentalsPage() {
               <div className="text-3xl font-bold text-red-400 mb-2">
                 {spaces.filter(s => !s.availability).length}
               </div>
-              <div className="text-sm text-gray-400">বুক করা</div>
+              <div className="text-sm text-gray-400">বুকড</div>
             </div>
           </div>
           <div className="bg-gray-900/80 backdrop-blur-sm p-6 rounded-2xl border border-gray-800 shadow-xl hover:border-cyan-500/30 transition-all">
@@ -299,27 +322,27 @@ export default function RentalsPage() {
           <div className="bg-gray-900/50 backdrop-blur-sm p-8 rounded-3xl border border-gray-800 shadow-2xl">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-300 mb-2">🔍 সার্চ করুন</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">🔍 অনুসন্ধান</label>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="লোকেশন বা সাইজ দিয়ে খুঁজুন..."
+                  placeholder="অবস্থান বা আকার দ্বারা অনুসন্ধান করুন..."
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-300 text-white placeholder-gray-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">📏 সাইজ</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">📏 আকার</label>
                 <select
                   value={selectedSize}
                   onChange={(e) => setSelectedSize(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-300 text-white"
                 >
-                  <option value="all">সব সাইজ</option>
-                  <option value="small">ছোট (১০০-৫০০ বর্গফুট)</option>
-                  <option value="medium">মাঝারি (৫০০-১০০০ বর্গফুট)</option>
-                  <option value="large">বড় (১০০০+ বর্গফুট)</option>
+                  <option value="all">সব আকার</option>
+                  <option value="small">ছোট (100-500 বর্গ ফুট)</option>
+                  <option value="medium">মাঝারি (500-1000 বর্গ ফুট)</option>
+                  <option value="large">বড় (1000+ বর্গ ফুট)</option>
                 </select>
               </div>
 
@@ -331,8 +354,8 @@ export default function RentalsPage() {
                   className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all duration-300 text-white"
                 >
                   <option value="all">সব অবস্থা</option>
-                  <option value="available">অভ্যন্তরীণ</option>
-                  <option value="booked">বুক করা</option>
+                  <option value="available">উপলব্ধ</option>
+                  <option value="booked">বুকড</option>
                 </select>
               </div>
             </div>
@@ -352,13 +375,13 @@ export default function RentalsPage() {
         {spaces.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-8xl mb-6">💧🌱</div>
-            <div className="text-gray-300 text-2xl font-medium mb-4">কোনো পানির স্পেস পাওয়া যায়নি</div>
-            <div className="text-gray-500 text-lg mb-8">ফিল্টার পরিবর্তন করে চেষ্টা করুন অথবা একটু পরে আবার দেখুন</div>
+            <div className="text-gray-300 text-2xl font-medium mb-4">কোনো হাইড্রোপোনিক স্পেস পাওয়া যায়নি</div>
+            <div className="text-gray-500 text-lg mb-8">আপনার ফিল্টার পরিবর্তন করুন বা পরে চেক করুন</div>
             <button
               onClick={fetchSpaces}
               className="px-8 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl hover:from-cyan-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
             >
-              🔄 রিফ্রেশ করুন
+              🔄 রিফ্রেশ
             </button>
           </div>
         ) : (
@@ -382,7 +405,7 @@ export default function RentalsPage() {
                           <div class="relative z-10 text-center flex items-center justify-center h-full">
                             <div class="text-center">
                               <div class="text-7xl mb-2 animate-bounce">💧</div>
-                              <div class="text-gray-400 font-medium">পানির উদ্যান</div>
+                               <div class="text-gray-400 font-medium">হাইড্রোপোনিক গার্ডেন</div>
                             </div>
                           </div>
                           <div class="absolute top-4 left-4 w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
@@ -405,7 +428,7 @@ export default function RentalsPage() {
                   )}
 
                   <div className="absolute top-4 left-4 bg-gray-800/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-cyan-400 shadow-lg border border-gray-700">
-                    📏 {space.size || 'মাঝারি'}
+                    📏 {space.size === 'small' ? 'ছোট' : space.size === 'medium' ? 'মাঝারি' : space.size === 'large' ? 'বড়' : 'মাঝারি'}
                   </div>
 
                   <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-medium shadow-lg ${
@@ -413,7 +436,7 @@ export default function RentalsPage() {
                       ? 'bg-green-600/90 text-white'
                       : 'bg-red-600/90 text-white'
                   }`}>
-                    {space.availability ? '✅ অভ্যন্তরীণ' : '❌ বুক করা'}
+                    {space.availability ? '✅ উপলব্ধ' : '❌ বুকড'}
                   </div>
                 </div>
 
@@ -424,30 +447,52 @@ export default function RentalsPage() {
                   </h3>
 
                   <div className="space-y-2 mb-6">
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <span className="text-cyan-400">📍</span>
-                      <span className="text-sm">লোকেশন: {space.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <span className="text-cyan-400">💰</span>
-                      <span className="text-sm">মূল্য: ৳{space.price}/মাস</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <span className="text-cyan-400">🌊</span>
-                      <span className="text-sm">পানির ব্যবস্থা: উন্নত</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <span className="text-cyan-400">🌱</span>
-                      <span className="text-sm">সবুজ পরিবেশ: আদর্শ</span>
-                    </div>
-                  </div>
+                     <div className="flex items-center gap-2 text-gray-300">
+                       <span className="text-cyan-400">📍</span>
+                       <span className="text-sm">অবস্থান: {space.location}</span>
+                     </div>
+                     <div className="flex items-center gap-2 text-gray-300">
+                       <span className="text-cyan-400">💰</span>
+                       <span className="text-sm">মূল্য: ৳{space.price}/মাস</span>
+                     </div>
+                     <div className="flex items-center gap-2 text-gray-300">
+                       <span className="text-cyan-400">🌊</span>
+                       <span className="text-sm">পানি সিস্টেম: উন্নত</span>
+                     </div>
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <span className="text-cyan-400">🌱</span>
+                        <span className="text-sm">সবুজ পরিবেশ: আদর্শ</span>
+                      </div>
+                   </div>
+
+                   {/* Vendor Information */}
+                   {space.vendor && (
+                     <div className="mb-4 bg-gray-800/30 rounded-lg p-3 border border-gray-700/30">
+                       <div className="flex items-center gap-2 mb-2">
+                         <span className="text-purple-400 text-sm">🏢</span>
+                         <span className="text-xs text-gray-400">ভেন্ডর তথ্য</span>
+                       </div>
+                       <div className="space-y-1">
+                         <Link
+                           href={`/users/${space.vendorId}`}
+                           className="text-white font-medium text-sm hover:text-cyan-400 transition-colors cursor-pointer"
+                         >
+                           {space.vendor.farmName} 👤
+                         </Link>
+                         <div className="text-xs text-gray-400 flex items-center gap-1">
+                           <span>📍</span>
+                           {space.vendor.farmLocation}
+                         </div>
+                       </div>
+                     </div>
+                   )}
 
                   <div className="text-center mb-6">
                     <div className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-1">
                       ৳{space.price}
                     </div>
-                    <div className="text-gray-400 text-sm">প্রতি মাস</div>
-                    <div className="text-gray-500 text-xs">≈ ${(space.price / 120).toFixed(2)} USD</div>
+                     <div className="text-gray-400 text-sm">প্রতি মাসে</div>
+                    <div className="text-gray-500 text-xs">≈ ${(space.price / 120).toFixed(2)} ডলার</div>
                   </div>
 
                   <div className="flex gap-3">
@@ -466,34 +511,48 @@ export default function RentalsPage() {
                         {bookingLoading === space.id.toString() ? (
                           <div className="flex items-center justify-center gap-2">
                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                            বুক হচ্ছে...
+                            বুকিং হচ্ছে...
                           </div>
                         ) : (
-                          '💧 বুক করুন'
+                          '💧 এখন বুক করুন'
                         )}
                       </button>
                     )}
                   </div>
 
-                  {space.plantStatus && (
-                    <div className="mt-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                      <div className="text-sm text-gray-300 mb-2">🌱 গাছের অবস্থা:</div>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div className="text-center">
-                          <div className="text-cyan-400 font-medium">{space.plantStatus.health || 'ভালো'}</div>
-                          <div className="text-gray-500">স্বাস্থ্য</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-cyan-400 font-medium">{space.plantStatus.age || 'নতুন'}</div>
-                          <div className="text-gray-500">বয়স</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-cyan-400 font-medium">{space.plantStatus.growth || 'ভালো'}</div>
-                          <div className="text-gray-500">বৃদ্ধি</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                   {space.plantStatus && (
+                     <div className="mt-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                        <div className="text-sm text-gray-300 mb-2">🌱 গাছের অবস্থা:</div>
+                       <div className="grid grid-cols-3 gap-2 text-xs">
+                         <div className="text-center">
+                          <div className="text-cyan-400 font-medium">{space.plantStatus.health === 'good' ? 'ভালো' : space.plantStatus.health || 'ভালো'}</div>
+                            <div className="text-gray-500">স্বাস্থ্য</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-cyan-400 font-medium">{space.plantStatus.age === 'new' ? 'নতুন' : space.plantStatus.age || 'নতুন'}</div>
+                            <div className="text-gray-500">বয়স</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-cyan-400 font-medium">{space.plantStatus.growth === 'good' ? 'ভালো' : space.plantStatus.growth || 'ভালো'}</div>
+                            <div className="text-gray-500">বৃদ্ধি</div>
+                         </div>
+                       </div>
+                       {/* Maintenance Status */}
+                       <div className="mt-3 pt-3 border-t border-gray-600">
+                         <div className="text-xs text-gray-400 mb-1">🔧 রক্ষণাবেক্ষণ অবস্থা:</div>
+                         <div className="flex items-center gap-2">
+                           <div className={`w-2 h-2 rounded-full ${space.availability ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                           <span className="text-xs text-gray-300">{space.availability ? 'সক্রিয়' : 'নিষ্ক্রিয়'}</span>
+                         </div>
+                       </div>
+                       {/* Last Update */}
+                       <div className="mt-2 pt-2 border-t border-gray-600">
+                         <div className="text-xs text-gray-500">
+                           শেষ আপডেট: {new Date(space.updatedAt).toLocaleDateString('bn-BD')}
+                         </div>
+                       </div>
+                     </div>
+                   )}
                 </div>
               </div>
             ))}
@@ -504,7 +563,7 @@ export default function RentalsPage() {
         <div className="mt-16 bg-gray-900/50 backdrop-blur-sm p-8 rounded-3xl border border-gray-800 shadow-2xl">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            <h3 className="text-2xl font-bold text-white">রিয়েল-টাইম আপডেট</h3>
+            <h3 className="text-2xl font-bold text-white">রিয়েল-টাইম আপডেটস</h3>
             <span className="text-sm text-gray-400 bg-gray-800 px-2 py-1 rounded-full border border-gray-700">
               লাইভ
             </span>
@@ -527,22 +586,22 @@ export default function RentalsPage() {
           ) : (
             <div className="text-center py-8">
               <div className="text-4xl mb-2">📡</div>
-              <p className="text-gray-400 text-sm">রিয়েল-টাইম আপডেটের জন্য অপেক্ষা করুন...</p>
-              <p className="text-gray-500 text-xs mt-1">ভেন্ডর বা সিস্টেম আপডেট করলে এখানে দেখাবে</p>
+              <p className="text-gray-400 text-sm">রিয়েল-টাইম আপডেটের অপেক্ষা করছি...</p>
+              <p className="text-gray-500 text-xs mt-1">ভেন্ডর বা সিস্টেম থেকে আপডেট এখানে প্রদর্শিত হবে</p>
             </div>
           )}
 
           <div className="mt-6 p-4 bg-gray-800/50 border border-gray-700 rounded-xl">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-cyan-400">ℹ️</span>
-              <span className="text-gray-300 text-sm font-medium">কী ধরনের আপডেট দেখবেন:</span>
+              <span className="text-gray-300 text-sm font-medium">আপনি কোন আপডেট দেখবেন:</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-400">
               <div>• রেন্টাল স্পেস তথ্য পরিবর্তন</div>
               <div>• উপলব্ধতা স্ট্যাটাস আপডেট</div>
               <div>• গাছের অবস্থা পরিবর্তন</div>
               <div>• পানি দেওয়ার তথ্য</div>
-              <div>• ভেন্ডরের বার্তা এবং নোটিফিকেশন</div>
+              <div>• ভেন্ডর বার্তা এবং বিজ্ঞপ্তি</div>
             </div>
           </div>
         </div>
@@ -550,27 +609,27 @@ export default function RentalsPage() {
         {/* Info Section */}
         <div className="mt-20 bg-gray-900/50 backdrop-blur-sm p-8 rounded-3xl border border-gray-800">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-4">পানির উদ্যান কেন বেছে নেবেন?</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">Why Choose Hydroponic Gardens?</h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              আমাদের পানির রেন্টাল স্পেসগুলোতে আধুনিক কৃষি প্রযুক্তি এবং পরিবেশবান্ধব ব্যবস্থা রয়েছে।
+              Our hydroponic rental spaces feature modern farming technology and eco-friendly systems.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="text-4xl mb-4">💧</div>
-              <h3 className="text-xl font-bold text-white mb-2">পানির ব্যবস্থা</h3>
-              <p className="text-gray-400 text-sm">উন্নত পানি সংরক্ষণ এবং সেচ ব্যবস্থা</p>
+              <h3 className="text-xl font-bold text-white mb-2">Water System</h3>
+              <p className="text-gray-400 text-sm">Advanced water conservation and irrigation systems</p>
             </div>
             <div className="text-center">
               <div className="text-4xl mb-4">🌱</div>
-              <h3 className="text-xl font-bold text-white mb-2">সবুজ পরিবেশ</h3>
-              <p className="text-gray-400 text-sm">পরিবেশবান্ধব এবং টেকসই কৃষি পদ্ধতি</p>
+              <h3 className="text-xl font-bold text-white mb-2">Green Environment</h3>
+              <p className="text-gray-400 text-sm">Eco-friendly and sustainable farming practices</p>
             </div>
             <div className="text-center">
               <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-bold text-white mb-2">মনিটরিং</h3>
-              <p className="text-gray-400 text-sm">রিয়েল-টাইম গাছের স্বাস্থ্য মনিটরিং</p>
+              <h3 className="text-xl font-bold text-white mb-2">Monitoring</h3>
+              <p className="text-gray-400 text-sm">Real-time plant health monitoring</p>
             </div>
           </div>
         </div>

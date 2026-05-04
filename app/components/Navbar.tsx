@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useVendorProfile } from '../hooks/useApi';
+import { useVendorProfile, useUnreadMessagesCount } from '../hooks/useApi';
 
 import ProfileImage from './ProfileImage';
 import { NotificationDropdown } from './NotificationDropdown';
@@ -19,6 +19,7 @@ export default function Navbar() {
 
   // Always call the hook but use enabled to control when it runs
   const { data: vendorProfile } = useVendorProfile();
+  const { data: unreadMessagesCount = 0 } = useUnreadMessagesCount();
 
   // Handle scroll effect for navbar background
   useEffect(() => {
@@ -447,7 +448,17 @@ export default function Navbar() {
 }
 
 // Helper component for desktop navigation links
-function NavLink({ href, pathname, children }: { href: string; pathname: string; children: React.ReactNode }) {
+function NavLink({
+  href,
+  pathname,
+  children,
+  badgeCount
+}: {
+  href: string;
+  pathname: string;
+  children: React.ReactNode;
+  badgeCount?: number;
+}) {
   const isActive = pathname === href;
   return (
     <Link
@@ -458,7 +469,14 @@ function NavLink({ href, pathname, children }: { href: string; pathname: string;
           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
       }`}
     >
-      <span className="relative z-10 flex items-center gap-2">{children}</span>
+      <span className="relative z-10 flex items-center gap-2">
+        {children}
+        {badgeCount && badgeCount > 0 && (
+          <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[20px] h-5">
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </span>
+        )}
+      </span>
       {!isActive && (
         <span className="absolute inset-0 rounded-full bg-gradient-to-r from-green-600/20 to-[#39FF14]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
       )}

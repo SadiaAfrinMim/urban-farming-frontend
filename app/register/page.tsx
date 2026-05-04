@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { UserPlus } from 'lucide-react';
 import api from '../lib/api';
 
 type UserRole = 'Customer' | 'Vendor' | 'Admin';
@@ -53,21 +54,24 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black py-12 px-4">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <Link href="/" className="text-[#39FF14] hover:text-[#28CC0C] hover:underline">← হোম পেজে ফিরে যান</Link>
-          <h2 className="mt-6 text-center text-3xl font-bold text-[#39FF14]">রেজিস্ট্রেশন করুন</h2>
-          <p className="mt-2 text-center text-sm text-gray-400">কাস্টমার, ভেন্ডর বা অ্যাডমিন হিসেবে রেজিস্ট্রেশন করুন</p>
+        <div className="text-center">
+          <div className="mx-auto h-16 w-16 bg-[#39FF14] rounded-full flex items-center justify-center mb-4 shadow-lg">
+            <UserPlus className="h-8 w-8 text-black" />
+          </div>
+          <Link href="/" className="text-[#39FF14] hover:text-[#28CC0C] hover:underline text-sm">← হোম পেজে ফিরে যান</Link>
+          <h2 className="mt-4 text-3xl font-bold text-[#39FF14]">রেজিস্ট্রেশন করুন</h2>
+          <p className="mt-2 text-sm text-gray-400">কাস্টমার, ভেন্ডর বা অ্যাডমিন হিসেবে রেজিস্ট্রেশন করুন</p>
         </div>
         
         {success ? (
-          <div className="bg-[#39FF14]/20 border border-[#39FF14] text-[#39FF14] px-4 py-3 rounded-lg">
+          <div className="bg-[#39FF14]/20 border border-[#39FF14] text-[#39FF14] px-6 py-4 rounded-lg shadow-lg">
             রেজিস্ট্রেশন সফল! লগইন পেজে যাচ্ছে...
           </div>
         ) : (
-          <form className="mt-8 space-y-6" onSubmit={handleRegister}>
-            <div className="rounded-md shadow-sm space-y-4">
+          <form className="mt-8 space-y-6 bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl shadow-2xl border border-gray-700" onSubmit={handleRegister}>
+            <div className="space-y-4">
               <div>
                 <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-1">রোল নির্বাচন করুন</label>
                 <select

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { useOrders } from '../hooks/useApi';
-import { Order } from '../lib/api';
+import { Order, resolveAssetUrl } from '../lib/api';
 
 // Order Tracking Modal Component
 function OrderTrackingModal({ order, isOpen, onClose }: {
@@ -44,68 +44,171 @@ function OrderTrackingModal({ order, isOpen, onClose }: {
     }
   };
 
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-900 rounded-xl shadow-2xl max-w-md w-full border border-gray-700">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#39FF14] to-[#28CC0C] text-black p-4 rounded-t-xl">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold">অর্ডার ট্র্যাকিং</h2>
-            <button
-              onClick={onClose}
-              className="text-black hover:text-gray-800 text-xl font-bold"
-            >
-              ×
-            </button>
-          </div>
+    <div
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-gray-900 rounded-xl shadow-2xl max-w-sm w-full border border-gray-700 relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Minimal Header */}
+        <div className="flex justify-between items-center p-4 border-b border-gray-700">
+          <h2 className="text-lg font-bold text-[#39FF14]">অর্ডার ট্র্যাকিং</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white text-xl font-bold transition-colors"
+          >
+            ×
+          </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4">
           {/* Order Info */}
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-3xl">
+          <div className="mb-4">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-2xl">
                 {order.produce ? '🥕' : '🌱'}
               </span>
-              <div>
-                <h3 className="font-bold text-[#39FF14] text-lg">
+              <div className="flex-1">
+                <h3 className="font-bold text-[#39FF14] text-base">
                   {order.produce ? order.produce.name : order.rentalSpace?.location}
                 </h3>
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-400 text-xs">
                   অর্ডার #{order.id?.toString().slice(0, 8)}
                 </p>
               </div>
             </div>
 
             {/* Status Display */}
-            <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">{getStatusIcon(order.status)}</span>
-                <div>
-                  <h4 className={`font-bold text-lg ${getStatusColor(order.status)}`}>
+            <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{getStatusIcon(order.status)}</span>
+                <div className="flex-1">
+                  <h4 className={`font-bold text-base ${getStatusColor(order.status)}`}>
                     {order.status}
                   </h4>
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-gray-400 text-xs">
                     {getStatusMessage(order.status)}
                   </p>
+                  <p className="text-gray-500 text-xs mt-1">
+                    {new Date(order.createdAt).toLocaleDateString('bn-BD')}
+                  </p>
                 </div>
-              </div>
-
-              {/* Order Date */}
-              <div className="mt-3 pt-3 border-t border-gray-700">
-                <p className="text-gray-500 text-xs">
-                  অর্ডার তারিখ: {new Date(order.createdAt).toLocaleDateString('bn-BD')}
-                </p>
               </div>
             </div>
           </div>
 
+          {/* Vendor Updates for Rental Orders */}
+          {order.rentalSpace && (
+            <div className="mb-4">
+              <h4 className="font-bold text-[#39FF14] text-base mb-3">🌱 ভেন্ডর আপডেটস</h4>
+              <div className="bg-gray-800 rounded-lg p-3 border border-gray-700 space-y-3">
+                {/* Rental Space Image */}
+                {order.rentalSpace.image && (
+                  <div className="mb-3">
+                    <img
+                      src={resolveAssetUrl(order.rentalSpace.image)}
+                      alt="Rental Space"
+                      className="w-full h-32 object-cover rounded-lg border border-gray-600"
+                      onError={(e) => {
+                        console.error('Image failed to load:', order.rentalSpace.image);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Plant Status - Single Dropdown Value */}
+                {order.rentalSpace.plantStatus && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">
+                      {order.rentalSpace.plantStatus === 'Seeding' ? '🌱' :
+                       order.rentalSpace.plantStatus === 'Sprouting' ? '🌿' :
+                       order.rentalSpace.plantStatus === 'Growing' ? '🌳' :
+                       order.rentalSpace.plantStatus === 'Flowering' ? '🌸' :
+                       order.rentalSpace.plantStatus === 'ReadyToHarvest' ? '✂️' :
+                       order.rentalSpace.plantStatus === 'Harvested' ? '🍂' : '🌱'}
+                    </span>
+                    <div className="flex-1">
+                      <span className="text-white font-medium text-sm">
+                        {order.rentalSpace.plantStatus === 'Seeding' ? 'বীজ বোনা' :
+                         order.rentalSpace.plantStatus === 'Sprouting' ? 'অঙ্কুরোদগম' :
+                         order.rentalSpace.plantStatus === 'Growing' ? 'বৃদ্ধি' :
+                         order.rentalSpace.plantStatus === 'Flowering' ? 'ফুল ধরা' :
+                         order.rentalSpace.plantStatus === 'ReadyToHarvest' ? 'তোলার জন্য প্রস্তুত' :
+                         order.rentalSpace.plantStatus === 'Harvested' ? 'তোলা হয়েছে' :
+                         order.rentalSpace.plantStatus}
+                      </span>
+                      <p className="text-gray-400 text-xs">
+                        {order.rentalSpace.plantStatus === 'Seeding' ? 'বীজ বপন করা হয়েছে' :
+                         order.rentalSpace.plantStatus === 'Sprouting' ? 'গাছ অঙ্কুরিত হচ্ছে' :
+                         order.rentalSpace.plantStatus === 'Growing' ? 'গাছ বাড়ছে' :
+                         order.rentalSpace.plantStatus === 'Flowering' ? 'ফুল আসছে' :
+                         order.rentalSpace.plantStatus === 'ReadyToHarvest' ? 'ফসল তোলার সময়' :
+                         order.rentalSpace.plantStatus === 'Harvested' ? 'ফসল তোলা হয়েছে' : ''}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Last Watered */}
+                {order.rentalSpace.lastWatered && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">💧</span>
+                    <div className="flex-1">
+                      <span className="text-white font-medium text-sm">সর্বশেষ সেচ</span>
+                      <p className="text-gray-400 text-xs">
+                        {new Date(order.rentalSpace.lastWatered).toLocaleDateString('bn-BD')} তারিখে
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Vendor Info */}
+                {order.vendor && (
+                  <div className="pt-3 border-t border-gray-700">
+                    <div className="text-xs space-y-1">
+                      <p className="text-gray-400">
+                        <span className="text-white font-medium">{order.vendor.user?.name || 'N/A'}</span> • {order.vendor.farmName || 'N/A'}
+                      </p>
+                      <p className="text-gray-500">
+                        📍 {order.vendor.farmLocation || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* No Updates Message */}
+                {!order.rentalSpace.plantStatus &&
+                 !order.rentalSpace.lastWatered &&
+                 !order.rentalSpace.image && (
+                  <p className="text-gray-400 text-xs text-center py-2">
+                    এখনও কোনো আপডেট নেই
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Action Button */}
-          <div className="flex justify-center">
+          <div className="flex justify-center pt-2">
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-[#39FF14] text-black rounded-lg font-medium hover:bg-[#28CC0C] transition-colors"
+              className="px-4 py-2 bg-[#39FF14] text-black rounded-lg font-medium hover:bg-[#28CC0C] transition-colors text-sm"
             >
               বন্ধ করুন
             </button>
@@ -228,7 +331,7 @@ export default function OrdersPage() {
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => openTrackingModal(order)}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                            className="px-4 py-2 bg-[#39FF14] hover:bg-[#28CC0C] text-black text-sm rounded-lg transition-colors font-medium"
                           >
                             📍 ট্র্যাক
                           </button>

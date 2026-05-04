@@ -199,13 +199,21 @@ export interface UserProfile {
 }
 
 // API Base URL - dynamically use environment variable or fallback
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
-  : process.env.NODE_ENV === 'production'
-  ? 'https://urban-farming-backend-production.up.railway.app/api/v1'  // Replace with your Railway URL
-  : 'https://urban-farming-backend-pink.vercel.app/api/v1';
+const normalizeBaseUrl = (url: string) => url.replace(/\/+$/, '');
+
+export const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL
+  ? normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL)
+  : 'https://urban-farming-rt02.onrender.com';
+
+export const API_BASE_URL = `${API_ORIGIN}/api/v1`;
 
 export const SOCKET_BASE_URL = API_BASE_URL.replace('/api/v1', '');
+
+export const resolveAssetUrl = (url?: string | null) => {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${API_ORIGIN}${url.startsWith('/') ? url : `/${url}`}`;
+};
 
 // Custom error class for API errors
 export class ApiError extends Error {
@@ -1007,8 +1015,8 @@ const api = {
 
   // Notification APIs
   getNotifications: async (page: number = 1, limit: number = 20) => {
-    const data = await apiClient.get<ApiResponse<any[]>>(`/notifications?page=${page}&limit=${limit}`);
-    return data;
+    const data = await apiClient.get<ApiResponse<{ data: any[]; meta: any }>>(`/notifications?page=${page}&limit=${limit}`);
+    return data.data;
   },
 
   getUnreadNotificationCount: async () => {
@@ -1039,6 +1047,33 @@ const api = {
   handleChatMessage: async (messageData: { userId: string; message: string }): Promise<ChatMessage> => {
     const data = await apiClient.post<ApiResponse<ChatMessage>>('/chat/handle', messageData);
     return data.data;
+  },
+
+  // Conversation API functions
+  getConversations: async (): Promise<any[]> => {
+    const data = await apiClient.get<ApiResponse<any[]>>('/conversations');
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  getOrCreateConversation: async (otherUserId: number): Promise<any> => {
+    const data = await apiClient.get<ApiResponse<any>>(`/conversations/with/${otherUserId}`);
+    return data.data;
+  },
+
+  getConversationMessages: async (conversationId: number): Promise<any[]> => {
+    const data = await apiClient.get<ApiResponse<any[]>>(`/conversations/${conversationId}/messages`);
+    return Array.isArray(data.data) ? data.data : [];
+  },
+
+  sendMessage: async (messageData: { conversationId: number; content: string }): Promise<any> => {
+    const data = await apiClient.post<ApiResponse<any>>(`/conversations/${messageData.conversationId}/messages`, {
+      content: messageData.content,
+    });
+    return data.data;
+  },
+
+  markMessagesAsRead: async (conversationId: number): Promise<void> => {
+    await apiClient.patch(`/conversations/${conversationId}/read`);
   },
 };
 

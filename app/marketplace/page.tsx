@@ -144,6 +144,8 @@ export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedOrganic, setSelectedOrganic] = useState<string>('all');
+
+  const [selectedCertification, setSelectedCertification] = useState<string>('all');
   const [selectedProduct, setSelectedProduct] = useState<Produce | null>(null);
   const [isProductStatusModalOpen, setIsProductStatusModalOpen] = useState(false);
   const { user } = useAuth();
@@ -166,7 +168,7 @@ export default function MarketplacePage() {
   };
 
   const searchProducts = async () => {
-    if (!searchQuery && selectedCategory === 'all' && selectedOrganic === 'all') {
+    if (!searchQuery && selectedCategory === 'all' && selectedOrganic === 'all' && selectedCertification === 'all') {
       fetchProducts();
       return;
     }
@@ -193,6 +195,12 @@ export default function MarketplacePage() {
         filteredProducts = filteredProducts.filter(product => product.isOrganic === isOrganic);
       }
 
+      if (selectedCertification !== 'all') {
+        filteredProducts = filteredProducts.filter(product =>
+          product.certificationStatus.toLowerCase() === selectedCertification.toLowerCase()
+        );
+      }
+
       setProducts(filteredProducts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'সার্চ করা যায়নি');
@@ -206,7 +214,7 @@ export default function MarketplacePage() {
       searchProducts();
     }, 300);
     return () => clearTimeout(timer);
-  }, [selectedCategory, selectedOrganic, searchQuery]);
+  }, [selectedCategory, selectedOrganic, selectedCertification, searchQuery]);
 
   const openProductStatusModal = (product: Produce) => {
     setSelectedProduct(product);
@@ -286,7 +294,7 @@ export default function MarketplacePage() {
           <div className="bg-gray-900/80 backdrop-blur-sm p-6 rounded-2xl border border-gray-800 shadow-xl hover:border-green-500/30 transition-all">
             <div className="text-center">
               <div className="text-3xl font-bold text-green-400 mb-2">{products.length}</div>
-              <div className="text-sm text-gray-400">মোট প্রোডাক্ট</div>
+              <div className="text-sm text-gray-400">অনুমোদিত প্রোডাক্ট</div>
             </div>
           </div>
           <div className="bg-gray-900/80 backdrop-blur-sm p-6 rounded-2xl border border-gray-800 shadow-xl hover:border-blue-500/30 transition-all">
@@ -318,8 +326,8 @@ export default function MarketplacePage() {
         {/* Filters */}
         <div className="max-w-5xl mx-auto mb-16">
           <div className="bg-gray-900/50 backdrop-blur-sm p-8 rounded-3xl border border-gray-800 shadow-2xl">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-1">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">🔍 সার্চ করুন</label>
                 <input
                   type="text"
@@ -355,6 +363,20 @@ export default function MarketplacePage() {
                   <option value="all">সব প্রোডাক্ট</option>
                   <option value="organic">অর্গানিক</option>
                   <option value="non-organic">নন-অর্গানিক</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">✅ সার্টিফিকেশন</label>
+                <select
+                  value={selectedCertification}
+                  onChange={(e) => setSelectedCertification(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 text-white"
+                >
+                  <option value="all">সব স্ট্যাটাস</option>
+                  <option value="Approved">অনুমোদিত</option>
+                  <option value="Pending">পেন্ডিং</option>
+                  <option value="Rejected">প্রত্যাখ্যাত</option>
                 </select>
               </div>
             </div>
@@ -530,8 +552,13 @@ export default function MarketplacePage() {
                         <span className="text-purple-400 text-sm">🏢</span>
                         <span className="text-xs text-gray-400">ভেন্ডর তথ্য</span>
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-white font-medium text-sm">{product.vendor.farmName}</div>
+                       <div className="space-y-1">
+                         <Link
+                           href={`/users/${product.vendorId}`}
+                           className="text-white font-medium text-sm hover:text-cyan-400 transition-colors cursor-pointer"
+                         >
+                           {product.vendor.farmName} 👤
+                         </Link>
                         <div className="text-xs text-gray-400 flex items-center gap-1">
                           <span>📍</span>
                           {product.vendor.farmLocation}

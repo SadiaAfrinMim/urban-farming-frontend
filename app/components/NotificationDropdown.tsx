@@ -33,34 +33,33 @@ export function NotificationDropdown() {
       fetchNotifications();
       fetchUnreadCount();
 
-      // WebSocket connection for real-time notifications (only in development)
-      if (process.env.NODE_ENV === 'development') {
-        const socket = io(SOCKET_BASE_URL);
+      const socket = io(SOCKET_BASE_URL, {
+        transports: ['websocket', 'polling'],
+      });
 
-        socket.on('connect', () => {
-          console.log('NotificationDropdown: Connected to WebSocket server');
-        });
+      socket.on('connect', () => {
+        console.log('NotificationDropdown: Connected to WebSocket server');
+        socket.emit('join_user_room', parseInt(user.id));
+      });
 
-        socket.on('disconnect', () => {
-          console.log('NotificationDropdown: Disconnected from WebSocket server');
-        });
+      socket.on('disconnect', () => {
+        console.log('NotificationDropdown: Disconnected from WebSocket server');
+      });
 
-        socket.on(`notification-${parseInt(user.id)}`, (newNotification: Notification) => {
-          console.log('NotificationDropdown: Received notification:', newNotification);
-          setNotifications(prev => Array.isArray(prev) ? [newNotification, ...prev] : [newNotification]);
-          setUnreadCount(prev => prev + 1);
-          // Show toast notification
-          toast.success(newNotification.title);
-        });
+      socket.on('notification', (newNotification: Notification) => {
+        console.log('NotificationDropdown: Received notification:', newNotification);
+        setNotifications(prev => Array.isArray(prev) ? [newNotification, ...prev] : [newNotification]);
+        setUnreadCount(prev => prev + 1);
+        toast.success(newNotification.title);
+      });
 
-        socket.on('connect_error', (error) => {
-          console.error('NotificationDropdown: WebSocket connection error:', error);
-        });
+      socket.on('connect_error', (error) => {
+        console.error('NotificationDropdown: WebSocket connection error:', error);
+      });
 
-        return () => {
-          socket.disconnect();
-        };
-      }
+      return () => {
+        socket.disconnect();
+      };
     } else {
       console.log('NotificationDropdown: No user logged in');
       // Clear notifications when user logs out
@@ -75,7 +74,7 @@ export function NotificationDropdown() {
       setLoading(true);
       const response = await api.getNotifications();
       console.log('Notifications API response:', response);
-      setNotifications(response.data?.data || []);
+      setNotifications(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
       setNotifications([]);
@@ -88,7 +87,7 @@ export function NotificationDropdown() {
     try {
       const response = await api.getUnreadNotificationCount();
       console.log('Unread count API response:', response);
-      setUnreadCount(response.data?.count || 0);
+      setUnreadCount(response.data.count || 0);
     } catch (error) {
       console.error('Failed to fetch unread count:', error);
       setUnreadCount(0);
@@ -151,12 +150,12 @@ export function NotificationDropdown() {
 
       {isOpen && (
         <Card className="absolute right-0 mt-2 w-80 max-h-96 overflow-hidden shadow-lg z-50">
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="font-semibold">Notifications</h3>
+          <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+            <h3 className="font-semibold text-white">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-blue-400 hover:text-blue-300"
               >
                 Mark all read
               </button>
@@ -165,12 +164,12 @@ export function NotificationDropdown() {
 
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
-              <div className="p-4 text-center text-gray-500">Loading...</div>
+              <div className="p-4 text-center text-gray-400">Loading...</div>
             ) : !Array.isArray(notifications) || notifications.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
+              <div className="p-4 text-center text-gray-400">
                 No notifications
                 {process.env.NODE_ENV === 'development' && (
-                  <div className="text-xs mt-2 text-gray-400">
+                  <div className="text-xs mt-2 text-gray-500">
                     Debug: {JSON.stringify(notifications)}
                   </div>
                 )}
@@ -179,22 +178,22 @@ export function NotificationDropdown() {
               Array.isArray(notifications) && notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
-                    !notification.isRead ? 'bg-blue-50' : ''
+                  className={`p-4 border-b border-gray-700 hover:bg-gray-800 cursor-pointer ${
+                    !notification.isRead ? 'bg-blue-900/50' : ''
                   }`}
                   onClick={() => !notification.isRead && markAsRead(notification.id)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h4 className="font-medium text-sm">{notification.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <h4 className="font-medium text-sm text-white">{notification.title}</h4>
+                      <p className="text-sm text-gray-300 mt-1">{notification.message}</p>
+                      <p className="text-xs text-gray-500 mt-1">
                         {formatTime(notification.createdAt)}
                       </p>
                     </div>
                     {!notification.isRead && (
                       <div className="ml-2 mt-1">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                       </div>
                     )}
                   </div>

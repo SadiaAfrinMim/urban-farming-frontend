@@ -23,7 +23,7 @@ export default function NotificationsPage() {
   const fetchNotifications = async () => {
     try {
       const response = await api.getNotifications();
-      setNotifications(response.data || []);
+      setNotifications(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'নোটিফিকেশন লোড করতে সমস্যা হয়েছে');
     } finally {

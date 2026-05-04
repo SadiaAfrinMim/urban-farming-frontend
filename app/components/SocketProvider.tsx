@@ -25,11 +25,6 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Only connect to socket in development environment
-    if (process.env.NODE_ENV !== 'development') {
-      return;
-    }
-
     const socketInstance = io(SOCKET_BASE_URL, {
       transports: ['websocket', 'polling'],
     });

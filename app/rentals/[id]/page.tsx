@@ -4,7 +4,7 @@ import { use, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRentalSpace, useCreateOrder } from '../../hooks/useApi';
-import { SOCKET_BASE_URL } from '../../lib/api';
+import api, { resolveAssetUrl, SOCKET_BASE_URL } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { io, Socket } from 'socket.io-client';
@@ -27,6 +27,8 @@ export default function RentalDetailPage({ params }: PageProps) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [liveUpdates, setLiveUpdates] = useState<string[]>([]);
   const [currentRentalSpace, setCurrentRentalSpace] = useState(rentalSpace);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [vendorInfo, setVendorInfo] = useState<any>(null);
 
   useEffect(() => {
     if (rentalSpace) {
@@ -34,6 +36,23 @@ export default function RentalDetailPage({ params }: PageProps) {
 
       const fetchRelatedData = async () => {
         try {
+          // Fetch vendor information
+          try {
+            const users = await api.getAllUsers();
+            const vendor = users.find(u => u.id === rentalSpace.vendorId.toString());
+            if (vendor) {
+              setVendorInfo({
+                id: vendor.id,
+                name: vendor.name,
+                farmName: vendor.name,
+                farmLocation: 'Location not available',
+                certificationStatus: 'Pending'
+              });
+            }
+          } catch (vendorError) {
+            console.warn('Could not fetch vendor info:', vendorError);
+          }
+
           // Fetch other rentals
           const allRentals = await api.getRentalSpaces();
           const filteredRentals = allRentals.filter(r => r.vendorId === rentalSpace.vendorId && r.id !== rentalSpace.id);
@@ -51,9 +70,8 @@ export default function RentalDetailPage({ params }: PageProps) {
     }
   }, [rentalSpace]);
 
-  // Real-time updates socket connection (only in development)
   useEffect(() => {
-    if (rentalSpace && process.env.NODE_ENV === 'development') {
+    if (rentalSpace) {
       // Connect to WebSocket server
       const socketConnection = io(SOCKET_BASE_URL, {
         transports: ['websocket', 'polling'],
@@ -184,8 +202,8 @@ export default function RentalDetailPage({ params }: PageProps) {
 
           toast.success('রেন্টাল অর্ডার তৈরি হয়েছে! পেমেন্ট পেজে যাচ্ছে...');
 
-          // Redirect to payment page
-          router.push('/payment');
+          // Redirect to checkout page with order ID
+          router.push(`/payment/checkout/${orderId}`);
         } else {
           toast.error(response.message || 'রেন্টাল অর্ডার তৈরি করা যায়নি');
         }
@@ -195,6 +213,57 @@ export default function RentalDetailPage({ params }: PageProps) {
         toast.error('রেন্টাল অর্ডার তৈরি করার সময় ত্রুটি ঘটেছে');
       }
     });
+  };
+
+  const handleToggleAvailability = async () => {
+    try {
+      setUpdatingStatus(true);
+      const spaceId = currentRentalSpace?.id || rentalSpace.id;
+      await api.toggleRentalSpaceAvailability(spaceId.toString());
+      const newAvailability = !(currentRentalSpace?.availability ?? rentalSpace.availability);
+      setCurrentRentalSpace(prev => prev ? {...prev, availability: newAvailability} : null);
+      toast.success(`স্পেস ${newAvailability ? 'উপলব্ধ' : 'অনুপলব্ধ'} করা হয়েছে!`);
+    } catch (error) {
+      console.error('Failed to toggle availability:', error);
+      toast.error('স্ট্যাটাস আপডেট করতে ব্যর্থ হয়েছে');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleUpdatePlantStatus = async (statusType: string) => {
+    try {
+      setUpdatingStatus(true);
+      const spaceId = currentRentalSpace?.id || rentalSpace.id;
+      let updateData: any = { rentalSpaceId: spaceId };
+
+      switch (statusType) {
+        case 'watered':
+          updateData.lastWatered = new Date().toISOString();
+          break;
+        case 'healthy':
+          updateData.plantStatus = { health: 'Healthy', age: 'Growing', growth: 'Good' };
+          break;
+        case 'maintenance':
+          updateData.plantStatus = { health: 'Under Maintenance', age: 'N/A', growth: 'N/A' };
+          break;
+        default:
+          break;
+      }
+
+      await api.updatePlantStatus(updateData);
+      toast.success('গাছের অবস্থা আপডেট হয়েছে!');
+      // Refresh the rental space data
+      if (rentalSpace) {
+        const updatedSpace = await api.getRentalSpace(rentalSpace.id.toString());
+        setCurrentRentalSpace(updatedSpace);
+      }
+    } catch (error) {
+      console.error('Failed to update plant status:', error);
+      toast.error('গাছের অবস্থা আপডেট করতে ব্যর্থ হয়েছে');
+    } finally {
+      setUpdatingStatus(false);
+    }
   };
 
   if (isLoading) {
@@ -256,7 +325,7 @@ export default function RentalDetailPage({ params }: PageProps) {
               <div className="relative h-96 md:h-full bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center overflow-hidden">
                 {rentalSpace.image ? (
                   <img
-                    src={rentalSpace.image.startsWith('http') ? rentalSpace.image : `https://urban-farming-backend-pink.vercel.app${rentalSpace.image}`}
+                    src={resolveAssetUrl(rentalSpace.image)}
                     alt={rentalSpace.location}
                     className="h-full w-full object-cover"
                     onError={(e) => {
@@ -352,12 +421,27 @@ export default function RentalDetailPage({ params }: PageProps) {
                 <h3 className="text-lg font-semibold text-gray-300 mb-3">স্পেসের তথ্য</h3>
                 <div className="space-y-2 text-gray-400">
                   <p><strong className="text-gray-300">আইডি:</strong> #{rentalSpace.id}</p>
-                  <p><strong className="text-gray-300">ভেন্ডর আইডি:</strong> #{rentalSpace.vendorId}</p>
                   <p><strong className="text-gray-300">অবস্থান:</strong> {rentalSpace.location}</p>
                   <p><strong className="text-gray-300">আকার:</strong> {rentalSpace.size}</p>
                   <p><strong className="text-gray-300">দাম:</strong> ৳{rentalSpace.price} প্রতি মাস</p>
                   <p><strong className="text-gray-300">উপলব্ধতা:</strong> {rentalSpace.availability ? 'হ্যাঁ' : 'না'}</p>
                 </div>
+
+                {/* Vendor Information */}
+                {vendorInfo && (
+                  <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <h4 className="text-sm font-medium text-gray-300 mb-2">🏢 ভেন্ডর তথ্য</h4>
+                    <div className="space-y-1">
+                      <Link
+                        href={`/users/${rentalSpace.vendorId}`}
+                        className="text-cyan-400 hover:text-cyan-300 font-medium text-sm transition-colors"
+                      >
+                        {vendorInfo.farmName} 👤
+                      </Link>
+                      <p className="text-xs text-gray-400">ভেন্ডর আইডি: #{rentalSpace.vendorId}</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Real-Time Plant Tracking Dashboard */}
@@ -486,6 +570,46 @@ export default function RentalDetailPage({ params }: PageProps) {
                 </button>
               </div>
 
+              {/* Status Update Section (For Vendors/Admins only) */}
+              {isAuthenticated && user && (user.role === 'Vendor' || user.role === 'Admin') && (
+                <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-300 mb-4">⚙️ স্ট্যাটাস আপডেট</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                      onClick={handleToggleAvailability}
+                      disabled={updatingStatus}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm"
+                    >
+                      {updatingStatus ? '...' : '🔄 উপলব্ধতা পরিবর্তন'}
+                    </button>
+                    <button
+                      onClick={() => handleUpdatePlantStatus('healthy')}
+                      disabled={updatingStatus}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm"
+                    >
+                      {updatingStatus ? '...' : '🌱 গাছের অবস্থা আপডেট'}
+                    </button>
+                  </div>
+                  <div className="mt-4 p-3 bg-gray-700 rounded-lg">
+                    <div className="text-sm text-gray-400 mb-2">📝 দ্রুত আপডেট:</div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <button className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors">
+                        ✅ সক্রিয় করুন
+                      </button>
+                      <button className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors">
+                        🔧 রক্ষণাবেক্ষণ
+                      </button>
+                      <button className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors">
+                        💧 পানি দেওয়া হয়েছে
+                      </button>
+                      <button className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors">
+                        📊 রিপোর্ট আপডেট
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 bg-gray-800 rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-gray-300 mb-3">রেন্টাল শর্তাবলী</h3>
                 <div className="space-y-2 text-sm text-gray-400">
@@ -558,7 +682,7 @@ export default function RentalDetailPage({ params }: PageProps) {
                     <div className="relative h-48 bg-gradient-to-br from-gray-800 to-gray-700 flex items-center justify-center overflow-hidden">
                       {space.image ? (
                         <img
-                          src={space.image.startsWith('http') ? space.image : `https://urban-farming-backend-pink.vercel.app${space.image}`}
+                          src={resolveAssetUrl(space.image)}
                           alt={space.location}
                           className="h-full w-full object-cover"
                           onError={(e) => {

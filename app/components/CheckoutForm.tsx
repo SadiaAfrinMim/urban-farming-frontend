@@ -10,6 +10,7 @@ import {
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { API_BASE_URL } from '../lib/api';
 
 interface CheckoutFormProps {
   orderId: string;
@@ -32,7 +33,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ orderId }) => {
     const fetchOrderDetails = async () => {
       try {
         const accessToken = localStorage.getItem('accessToken');
-        const response = await axios.get(`http://localhost:5000/api/v1/orders/${orderId}`, {
+        const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
           headers: {
             Authorization: accessToken ? `Bearer ${accessToken}` : '',
           },

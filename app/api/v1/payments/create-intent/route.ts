@@ -26,15 +26,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward the request to the backend
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${backendUrl}/api/v1/payments/create-intent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ orderId }),
-      });
+    const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://urban-farming-rt02.onrender.com').replace(/\/+$/, '');
+    const response = await fetch(`${backendUrl}/api/v1/payments/create-intent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ orderId }),
+    });
 
     const data = await response.json();
 

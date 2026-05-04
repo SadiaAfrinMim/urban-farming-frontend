@@ -7,7 +7,7 @@ import { usePendingCertifications, useApproveCertification, useRejectCertificati
 import ProfileImage from '../../components/ProfileImage';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { resolveAssetUrl } from '../../lib/api';
 
 interface VendorProfile {
   id: string;
@@ -213,7 +213,7 @@ export default function AdminCertificationsPage() {
                       <div className="grid grid-cols-2 gap-3">
                         {vendor.certifications.slice(0, 4).map((cert, index) => {
                           const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(cert);
-                          const fullUrl = cert.startsWith('http') ? cert : `${API_BASE_URL}${cert}`;
+                          const fullUrl = resolveAssetUrl(cert);
                           return (
                             <div key={index} className="relative group">
                               {isImage ? (

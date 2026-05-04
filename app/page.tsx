@@ -10,6 +10,7 @@ import {
   useTestimonials,
   useFeaturedVendors
 } from './hooks/useApi';
+import Chatbot from './components/Chatbot';
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
@@ -669,6 +670,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Chatbot />
     </div>
   );
 }

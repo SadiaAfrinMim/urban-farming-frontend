@@ -884,3 +884,69 @@ export const useHandleChatMessage = () => {
     },
   });
 };
+
+// Conversation Hooks
+export const useConversations = () => {
+  return useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => api.getConversations(),
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+};
+
+export const useConversationMessages = (conversationId?: number) => {
+  return useQuery({
+    queryKey: ['conversation-messages', conversationId],
+    queryFn: () => api.getConversationMessages(conversationId!),
+    enabled: !!conversationId,
+    staleTime: 30 * 1000, // 30 seconds
+  });
+};
+
+export const useSendMessage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (messageData: { conversationId: number; content: string }) =>
+      api.sendMessage(messageData),
+    onSuccess: (data, variables) => {
+      // Invalidate conversation messages and conversations list
+      queryClient.invalidateQueries({
+        queryKey: ['conversation-messages', variables.conversationId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['conversations']
+      });
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to send message');
+    },
+  });
+};
+
+export const useGetOrCreateConversation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (otherUserId: number) =>
+      api.getOrCreateConversation(otherUserId),
+    onSuccess: () => {
+      // Invalidate conversations list
+      queryClient.invalidateQueries({
+        queryKey: ['conversations']
+      });
+    },
+    onError: (error: ApiError) => {
+      toast.error(error.message || 'Failed to get conversation');
+    },
+  });
+};
+
+export const useUnreadMessagesCount = () => {
+  return useQuery({
+    queryKey: ['unread-messages-count'],
+    queryFn: async () => {
+      const conversations = await api.getConversations();
+      return conversations.reduce((total: number, conv: any) => total + (conv.unreadCount || 0), 0);
+    },
+    staleTime: 30 * 1000, // 30 seconds
+  });
+};

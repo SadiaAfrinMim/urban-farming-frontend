@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Plus, Droplets, Leaf, Trash2, Edit, Calendar, Heart, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Droplets, Leaf, Calendar, Heart, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { API_BASE_URL } from '../lib/api';
 
 interface Plant {
   id: string;
@@ -30,11 +30,12 @@ export default function PlantsPage() {
 
   const fetchPlants = async () => {
     try {
-      // Token is sent via cookies automatically
-      const res = await axios.get('http://localhost:5000/api/v1/plants', {
-        headers: { Authorization: `Bearer ${token}` }
+      const accessToken = localStorage.getItem('accessToken');
+      const res = await fetch(`${API_BASE_URL}/plant-tracking`, {
+        headers: { Authorization: `Bearer ${accessToken || ''}` }
       });
-      setPlants(res.data.data);
+      const data = await res.json();
+      setPlants(data.data || []);
     } catch (error) {
       console.error('Error fetching plants:', error);
     } finally {
@@ -49,9 +50,14 @@ export default function PlantsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Token is sent via cookies automatically
-      await axios.post('http://localhost:5000/api/v1/plants', newPlant, {
-        headers: { Authorization: `Bearer ${token}` }
+      const accessToken = localStorage.getItem('accessToken');
+      await fetch(`${API_BASE_URL}/plant-tracking`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken || ''}`
+        },
+        body: JSON.stringify(newPlant),
       });
       setShowModal(false);
       setNewPlant({
@@ -69,9 +75,10 @@ export default function PlantsPage() {
 
   const handleWater = async (id: string) => {
     try {
-      // Token is sent via cookies automatically
-      await axios.patch(`http://localhost:5000/api/v1/plants/${id}/water`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
+      const accessToken = localStorage.getItem('accessToken');
+      await fetch(`${API_BASE_URL}/plant-tracking/${id}/water`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken || ''}` }
       });
       fetchPlants();
     } catch (error) {
@@ -81,9 +88,10 @@ export default function PlantsPage() {
 
   const handleFertilize = async (id: string) => {
     try {
-      // Token is sent via cookies automatically
-      await axios.patch(`http://localhost:5000/api/v1/plants/${id}/fertilize`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
+      const accessToken = localStorage.getItem('accessToken');
+      await fetch(`${API_BASE_URL}/plant-tracking/${id}/fertilize`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken || ''}` }
       });
       fetchPlants();
     } catch (error) {

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '../lib/api';
 
 interface User {
   id: string;
@@ -43,7 +44,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Check for existing auth on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    // Token is sent via cookies automatically, no need to retrieve from localStorage
+    const storedToken = localStorage.getItem('accessToken');
 
     if (storedUser && storedToken) {
       try {
@@ -62,7 +63,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:5000/api/v1/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +97,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:5000/api/v1/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

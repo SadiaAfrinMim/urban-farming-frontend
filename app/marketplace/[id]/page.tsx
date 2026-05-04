@@ -73,6 +73,8 @@ export default function ProductDetailPage({ params }: PageProps) {
       // Redirect to payment page
       if (orderResponse?.data?.data?.id) {
         router.push(`/payment/checkout/${orderResponse.data.data.id}`);
+      } else if (orderResponse?.data?.id) {
+        router.push(`/payment/checkout/${orderResponse.data.id}`);
       } else {
         // Fallback to general payment page if no order ID
         router.push('/payment');

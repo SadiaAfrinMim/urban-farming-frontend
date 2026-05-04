@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function LoginPage() {
@@ -30,14 +31,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-black py-12 px-4">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <Link href="/" className="text-[#39FF14] hover:text-[#28CC0C] hover:underline">← হোম পেজে ফিরে যান</Link>
-          <h2 className="mt-6 text-center text-3xl font-bold text-[#39FF14]">লগইন করুন</h2>
+        <div className="text-center">
+          <div className="mx-auto h-16 w-16 bg-[#39FF14] rounded-full flex items-center justify-center mb-4 shadow-lg">
+            <Lock className="h-8 w-8 text-black" />
+          </div>
+          <Link href="/" className="text-[#39FF14] hover:text-[#28CC0C] hover:underline text-sm">← হোম পেজে ফিরে যান</Link>
+          <h2 className="mt-4 text-3xl font-bold text-[#39FF14]">লগইন করুন</h2>
+          <p className="mt-2 text-sm text-gray-400">আপনার অ্যাকাউন্টে প্রবেশ করুন</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          <div className="rounded-md shadow-sm space-y-4">
+        <form className="mt-8 space-y-6 bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl shadow-2xl border border-gray-700" onSubmit={handleLogin}>
+          <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">ইমেইল</label>
               <input
@@ -47,7 +52,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 focus:outline-none focus:ring-[#39FF14] focus:border-[#39FF14] focus:z-10 sm:text-sm"
+                className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] transition duration-200 sm:text-sm"
                 placeholder="আপনার ইমেইল"
               />
             </div>
@@ -60,7 +65,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-lg relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-800 focus:outline-none focus:ring-[#39FF14] focus:border-[#39FF14] focus:z-10 sm:text-sm"
+                className="appearance-none rounded-lg relative block w-full px-4 py-3 border border-gray-600 placeholder-gray-400 text-white bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] transition duration-200 sm:text-sm"
                 placeholder="আপনার পাসওয়ার্ড"
               />
             </div>
@@ -84,7 +89,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-black bg-[#39FF14] hover:bg-[#28CC0C] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#39FF14] disabled:bg-gray-600"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-black bg-[#39FF14] hover:bg-[#28CC0C] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#39FF14] disabled:bg-gray-600 transition duration-200 shadow-lg hover:shadow-xl"
             >
               {loading ? 'লোড হচ্ছে...' : 'লগইন'}
             </button>
